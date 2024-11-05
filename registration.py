@@ -180,7 +180,7 @@ class Model():
     def get_params(self) -> (list, np.ndarray):
         return self.kp, self.des
 
-
+#
 #model = Model()
 #model._check("./CameraParams/CameraParams.npz", "./old_files/DanielFiles/book.jpg")
 #model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
