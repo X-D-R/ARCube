@@ -52,7 +52,7 @@ def crop_and_straighten_image(image_path, output_path):
         matrix = cv2.getPerspectiveTransform(rect, dst)
         warped = cv2.warpPerspective(image, matrix, (maxWidth, maxHeight))
 
-        cv2.imshow('Cropped and Straightened Image', warped)
+        cv2.imshow('Cropped Image', warped)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
         cv2.imwrite(output_path, warped)
