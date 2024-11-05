@@ -8,15 +8,19 @@ class Model():
         '''
         Attributes:
         - img (np.ndarray): The image data
+        - height (int): The height of the picture
+        - width (int): The width of the picture
         - kp (list): Key points detected in the image
         - des (np.ndarray): Descriptors for the key points
-        - height (int): The height of the object (needed for 3d rectangle frame)
+        - vol (int): The volume of the object (needed for 3d rectangle frame)
         - camera_params (dict): Dictionary containing camera parameters
         '''
         self.img: np.ndarray = None
+        self.height: int = 0
+        self.width: int = 0
         self.kp: list = []
         self.des: np.ndarray = np.empty((0, 0))
-        self.height: int = 0
+        self.vol: int = 0
         self.camera_params: dict = {}
 
 
@@ -46,6 +50,7 @@ class Model():
         :return: None
         '''
         self.img = cv.imread(path, cv.IMREAD_GRAYSCALE)
+        self.height, self.width = self.img.shape
 
 
     def register(self, feature: str) -> None:
@@ -104,7 +109,7 @@ class Model():
             matrix = cv.getPerspectiveTransform(rect, dst)
             warped = cv.warpPerspective(self.img, matrix, (max_width, max_height))
             self.img = warped
-
+            self.height, self.width = self.img.shape
         else:
             print("Error: Insufficient points selected!")
 
