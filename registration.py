@@ -1,6 +1,7 @@
 import numpy as np
 import cv2 as cv
-from matplotlib import pyplot as plt
+import pickle
+
 
 class Model():
 
@@ -81,10 +82,25 @@ class Model():
             raise ValueError("Unsupported feature type.")
 
         self.kp, self.des = method.detectAndCompute(self.img, None)
+        self.method=feature
 
 
     def get_params(self) -> (list, np.ndarray):
         return self.kp, self.des
+
+
+    def order_points(self,pts):
+        """ Orders points in the format: top-left, top-right, bottom-right, bottom-left """
+        rect = np.zeros((4, 2), dtype="float32")
+        s = pts.sum(axis=1)
+        rect[0] = pts[np.argmin(s)]  # Top-left
+        rect[2] = pts[np.argmax(s)]  # Bottom-right
+
+        diff = np.diff(pts, axis=1)
+        rect[1] = pts[np.argmin(diff)]  # Top-right
+        rect[3] = pts[np.argmax(diff)]  # Bottom-left
+
+        return rect
 
 
     def crop_image_by_points(self, points: np.ndarray) -> None:
@@ -95,7 +111,7 @@ class Model():
         :return: None
         '''
         if len(points) == 4:
-            rect = np.array(points, dtype="float32")
+            rect = self.order_points(points)
 
             width_a = np.linalg.norm(rect[0] - rect[1])
             width_b = np.linalg.norm(rect[2] - rect[3])
@@ -120,7 +136,7 @@ class Model():
             print("Error: Insufficient points selected!")
 
 
-    def click_event(self, event, x, y, param):
+    def click_event(self, event, x, y, flags, param):
         '''
         This function captures four points on the image upon mouse clicks.
         :param event: Mouse event, like left button click
@@ -134,6 +150,7 @@ class Model():
             points.append([x, y])
             cv.circle(image, (x, y), 5, (0, 0, 255), -1)
             cv.imshow('Select Points', image)
+
             if len(points) == 4:
                 cv.destroyWindow('Select Points')
 
@@ -148,6 +165,7 @@ class Model():
         image=self.img.copy()
         h, w = image.shape[:2]
         max_height = 800
+        scale = 1.0
         if h > max_height:
             scale = max_height / h
             image = cv.resize(image, (int(w * scale), int(h * scale)))
@@ -158,7 +176,7 @@ class Model():
         cv.waitKey(0)
 
         if len(points) == 4:
-            points = np.array(points, dtype="float32")
+            points = np.array([[int(x / scale), int(y / scale)] for [x, y] in points], dtype="float32")
             self.crop_image_by_points(points)
         else:
             print("Error: Insufficient points selected!")
@@ -172,24 +190,68 @@ class Model():
             print(f"Feature: {feature}\n\n")
             print(f" KeyPoints: \n {self.kp} \n\n Descriptors: \n{self.des}\n\n")
 
-
     def save_to_npz(self, filename: str) -> None:
-        ''' Save the model attributes to a .npz file '''
+        ''' Save model attributes to a .npz file '''
+        keypoints = [{'pt': kp.pt, 'size': kp.size, 'angle': kp.angle, 'response': kp.response,
+                      'octave': kp.octave, 'class_id': kp.class_id} for kp in self.kp]
         np.savez(filename, img=self.img, height=self.height, width=self.width,
-                 kp=self.kp, des=self.des, vol=self.vol,
-                 camera_params=self.camera_params, method=self.method)
+                 kp=keypoints, des=self.des, vol=self.vol, camera_params=self.camera_params,
+                 method=self.method)
+
 
     @classmethod
     def load(cls, filename: str) -> 'Model':
         ''' Load model attributes from a .npz file and create a Model instance '''
         data = np.load(filename, allow_pickle=True)
-        return cls(img=data['img'], height=data['height'], width=data['width'],
-                   kp=data['kp'].tolist(), des=data['des'],
-                   vol=data['vol'], camera_params=data['camera_params'].item(), method=data['method'])
+
+        if 'img' not in data:
+            raise ValueError("The file does not contain the 'img' attribute.")
+
+        keypoints = [cv.KeyPoint(kp['pt'][0], kp['pt'][1], kp['size'], kp['angle'],
+                                 kp['response'], kp['octave'], kp['class_id'])
+                     for kp in data['kp']]
+
+        return cls(
+            img=data['img'],  # Ensuring 'img' is loaded correctly
+            height=data['height'].item() if 'height' in data else None,
+            width=data['width'].item() if 'width' in data else None,
+            kp=keypoints,
+            des=data['des'] if 'des' in data else None,
+            vol=data['vol'] if 'vol' in data else None,
+            camera_params=data['camera_params'].item() if 'camera_params' in data else None,
+            method=data['method'] if 'method' in data else None
+        )
 
 
 
-#
 #model = Model()
 #model._check("./CameraParams/CameraParams.npz", "./old_files/DanielFiles/book.jpg")
 #model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
+
+model = Model()
+model.upload_image('old_files/andrew photo video/messy krivoy.jpg')
+model.load_camera_params('CameraParams/CameraParams.npz')
+'''
+points = np.array(((340, 230), (808, 368), (570, 1140), (92, 969)))
+model.crop_image_by_points(points)
+cv.waitKey(0)
+cv.imshow('Cropped Image', model.img)
+cv.waitKey(0)
+
+model.crop_image_by_clicks()
+cv.waitKey(0)
+cv.imshow('Cropped Image2', model.img)
+cv.waitKey(0)
+'''
+
+model.register('SIFT')
+
+path='testmodel.npz'
+model.save_to_npz(path)
+
+model2=Model.load(path)
+print(model2.kp,model2.des,model2.vol,model2.camera_params,model2.method,model2.height,model2.width)
+cv.waitKey(0)
+cv.imshow(' Image m2', model2.img)
+cv.waitKey(0)
+
