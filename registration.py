@@ -4,20 +4,27 @@ from matplotlib import pyplot as plt
 
 class Model():
 
-    def __init__(self):
+    def __init__(self, img: np.ndarray = None, height: int = 0, width: int = 0, kp: list = None,
+                 des: np.ndarray = np.empty((0, 0)), vol: int = 0, camera_params: dict = None, method: str = ''):
         '''
         Attributes:
         - img (np.ndarray): The image data
+        - height (int): The height of the picture
+        - width (int): The width of the picture
         - kp (list): Key points detected in the image
         - des (np.ndarray): Descriptors for the key points
-        - height (int): The height of the object (needed for 3d rectangle frame)
+        - vol (int): The volume of the object (needed for 3d rectangle frame)
         - camera_params (dict): Dictionary containing camera parameters
+        - method (str): feature detection method to use ("ORB", "KAZE", "AKAZE", "BRISK", "SIFT")
         '''
-        self.img: np.ndarray = None
-        self.kp: list = []
-        self.des: np.ndarray = np.empty((0, 0))
-        self.height: int = 0
-        self.camera_params: dict = {}
+        self.img: img
+        self.height = height
+        self.width = width
+        self.kp = kp
+        self.des = des
+        self.vol = vol
+        self.camera_params = camera_params
+        self.method = method
 
 
     def load_camera_params(self, path) -> None:
@@ -45,7 +52,12 @@ class Model():
         :param path: str
         :return: None
         '''
-        self.img = cv.imread(path, cv.IMREAD_GRAYSCALE)
+        try:
+            self.img = cv.imread(path, cv.IMREAD_GRAYSCALE)
+            self.height, self.width = self.img.shape
+            self.vol = int(input("Input volume:"))
+        except Exception as e:
+            raise ValueError(f"An error occurred while loading the image: {e}")
 
 
     def register(self, feature: str) -> None:
@@ -70,6 +82,7 @@ class Model():
             raise ValueError("Unsupported feature type.")
 
         self.kp, self.des = method.detectAndCompute(self.img, None)
+        self.method = feature
 
 
     def get_params(self) -> (list, np.ndarray):
@@ -104,7 +117,7 @@ class Model():
             matrix = cv.getPerspectiveTransform(rect, dst)
             warped = cv.warpPerspective(self.img, matrix, (max_width, max_height))
             self.img = warped
-
+            self.height, self.width = self.img.shape
         else:
             print("Error: Insufficient points selected!")
 
@@ -162,25 +175,26 @@ class Model():
             print(f" KeyPoints: \n {self.kp} \n\n Descriptors: \n{self.des}\n\n")
 
 
-    def save_to_npz(self) -> None:
-        np.savez("RegisterParams", kp=self.kp, des=self.des)
+    def save_to_npz(self, filename: str) -> None:
+        ''' Save the model attributes to a .npz file '''
+        np.savez(filename, img=self.img, height=self.height, width=self.width,
+                 kp=self.kp, des=self.des, vol=self.vol, method=self.method)
 
-    def _check(self, path_params: str, path_img: str) -> None:
-        self.load_camera_params(path_params)
-        self.upload_image(path_img)
-        for feature in ["ORB", "KAZE", "AKAZE", "BRISK", "SIFT"]:
-            self.register(feature)
-            print(f"Feature: {feature}\n\n")
-            print(f" KeyPoints: \n {self.kp} \n\n Descriptors: \n{self.des}\n\n")
-
-    def save_to_npz(self) -> None:
-        np.savez("RegisterParams", kp=self.kp, des=self.des)
-
-
-    def get_params(self) -> (list, np.ndarray):
-        return self.kp, self.des
+    @classmethod
+    def load(cls, filename: str) -> 'Model':
+        ''' Load model attributes from a .npz file and create a Model instance '''
+        data = np.load(filename, allow_pickle=True)
+        return cls(img=data['img'], height=data['height'], width=data['width'],
+                   kp=data['kp'].tolist(), des=data['des'],
+                   vol=data['vol'], camera_params=data['camera_params'].item(), method=data['method'])
 
 
+
+#
 #model = Model()
+#model.load_camera_params("./CameraParams/CameraParams.npz")
+#model.upload_image("./old_files/DanielFiles/book.jpg")
+#model.register("ORB")
+#model.save_to_npz("book_reg")
 #model._check("./CameraParams/CameraParams.npz", "./old_files/DanielFiles/book.jpg")
 #model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
