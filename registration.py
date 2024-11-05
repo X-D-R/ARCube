@@ -15,6 +15,7 @@ class Model():
         - des (np.ndarray): Descriptors for the key points
         - vol (int): The volume of the object (needed for 3d rectangle frame)
         - camera_params (dict): Dictionary containing camera parameters
+        - method (str): feature detection method to use ("ORB", "KAZE", "AKAZE", "BRISK", "SIFT")
         '''
         self.img: img
         self.height = height
