@@ -9,24 +9,22 @@ class Model():
         self.img: np.ndarray = np.array(1)
         self.kp: tuple = tuple()
         self.des: np.ndarray = np.array(1)
+        self.camera_params: dict = {}
 
 
     def load_camera_params(self, path) -> None:
         '''
         This function should load params from
         file to self.camera_params
+        path should be .npz file
         :return: None
         '''
-        pass
-
-
-    def register(self) -> None:
-        '''
-        This function should register model and
-        write keypoints and descriptors in self.kp and self.des
-        :return: None
-        '''
-        pass
+        with np.load(path) as file:
+            mtx, dist, rvecs, tvecs = [file[i] for i in ('cameraMatrix', 'dist', 'rvecs', 'tvecs')]
+            self.camera_params["mtx"] = mtx
+            self.camera_params["dist"] = dist
+            self.camera_params["rvecs"] = rvecs
+            self.camera_params["tvecs"] = tvecs
 
 
     def upload_image(self, path: str) -> None:
@@ -36,7 +34,31 @@ class Model():
         :param path: str
         :return: None
         '''
-        pass
+        self.img = cv.imread('path', cv.IMREAD_GRAYSCALE)
+
+
+    def register(self, feature: str) -> None:
+        '''
+        This function should register model and
+        write keypoints and descriptors in self.kp and self.des
+        :return: None
+        '''
+        if feature == "ORB":
+            orb = cv.ORB.create()
+            self.kp, self.des = orb.detectAndCompute(self.img, None)
+        elif feature == "KAZE":
+            kaze = cv.KAZE.create()
+            self.kp, self.des = kaze.detectAndCompute(self.img, None)
+        elif feature == "AKAZE":
+            akaze = cv.AKAZE.create()
+            self.kp, self.des = akaze.detectAndCompute(self.img, None)
+        elif feature == "BRISK":
+            brisk = cv.BRISK.create()
+            self.kp, self.des = brisk.detectAndCompute(self.img, None)
+        elif feature == "SIFT":
+            sift = cv.SIFT.create()
+            self.kp, self.des = sift.detectAndCompute(self.img, None)
+
 
     def _crop_image(self, img: np.ndarray, points: np.ndarray) -> None:
         '''
