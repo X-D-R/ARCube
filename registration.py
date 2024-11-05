@@ -6,7 +6,7 @@ class Model():
 
 
     def __init__(self):
-        self.img: np.ndarray = np.array(1)
+        self.img: np.ndarray = None
         self.kp: tuple = tuple()
         self.des: np.ndarray = np.array(1)
         self.camera_params: dict = {}
@@ -44,6 +44,7 @@ class Model():
         write keypoints and descriptors in self.kp and self.des
         :return: None
         '''
+        assert self.img is not None, 'Image should be loaded first'
         if feature == "ORB":
             orb = cv.ORB.create()
             self.kp, self.des = orb.detectAndCompute(self.img, None)
@@ -82,6 +83,10 @@ class Model():
 
     def save_to_npz(self) -> None:
         np.savez("RegisterParams", kp=self.kp, des=self.des)
+
+
+    def get_params(self) -> (list, np.ndarray):
+        return self.kp, self.des
 
 
 #model = Model()
