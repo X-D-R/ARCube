@@ -56,6 +56,7 @@ class Model():
         try:
             self.img = cv.imread(path, cv.IMREAD_GRAYSCALE)
             self.height, self.width = self.img.shape
+            self.vol = int(input("Input volume:"))
         except Exception as e:
             raise ValueError(f"An error occurred while loading the image: {e}")
 
@@ -82,7 +83,7 @@ class Model():
             raise ValueError("Unsupported feature type.")
 
         self.kp, self.des = method.detectAndCompute(self.img, None)
-        self.method=feature
+        self.method = feature
 
 
     def get_params(self) -> (list, np.ndarray):
@@ -198,7 +199,7 @@ class Model():
                  kp=keypoints, des=self.des, vol=self.vol, camera_params=self.camera_params,
                  method=self.method)
 
-
+        
     @classmethod
     def load(cls, filename: str) -> 'Model':
         ''' Load model attributes from a .npz file and create a Model instance '''
@@ -224,8 +225,14 @@ class Model():
 
 
 
+#
 #model = Model()
+#model.load_camera_params("./CameraParams/CameraParams.npz")
+#model.upload_image("./old_files/DanielFiles/book.jpg")
+#model.register("ORB")
+#model.save_to_npz("book_reg")
 #model._check("./CameraParams/CameraParams.npz", "./old_files/DanielFiles/book.jpg")
+'''
 #model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
 
 model = Model()
@@ -254,4 +261,5 @@ print(model2.kp,model2.des,model2.vol,model2.camera_params,model2.method,model2.
 cv.waitKey(0)
 cv.imshow(' Image m2', model2.img)
 cv.waitKey(0)
-
+'''
+#model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
