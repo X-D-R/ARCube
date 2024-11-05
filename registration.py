@@ -4,7 +4,8 @@ from matplotlib import pyplot as plt
 
 class Model():
 
-    def __init__(self):
+    def __init__(self, img: np.ndarray = None, height: int = 0, width: int = 0, kp: list = [],
+                 des: np.ndarray = np.empty((0, 0)), vol: int = 0, camera_params: dict = {}, method: str = ''):
         '''
         Attributes:
         - img (np.ndarray): The image data
@@ -15,13 +16,14 @@ class Model():
         - vol (int): The volume of the object (needed for 3d rectangle frame)
         - camera_params (dict): Dictionary containing camera parameters
         '''
-        self.img: np.ndarray = None
-        self.height: int = 0
-        self.width: int = 0
-        self.kp: list = []
-        self.des: np.ndarray = np.empty((0, 0))
-        self.vol: int = 0
-        self.camera_params: dict = {}
+        self.img: img
+        self.height = height
+        self.width = width
+        self.kp = kp
+        self.des = des
+        self.vol = vol
+        self.camera_params = camera_params
+        self.method = method
 
 
     def load_camera_params(self, path) -> None:
