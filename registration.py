@@ -4,8 +4,8 @@ from matplotlib import pyplot as plt
 
 class Model():
 
-    def __init__(self, img: np.ndarray = None, height: int = 0, width: int = 0, kp: list = [],
-                 des: np.ndarray = np.empty((0, 0)), vol: int = 0, camera_params: dict = {}, method: str = ''):
+    def __init__(self, img: np.ndarray = None, height: int = 0, width: int = 0, kp: list = None,
+                 des: np.ndarray = np.empty((0, 0)), vol: int = 0, camera_params: dict = None, method: str = ''):
         '''
         Attributes:
         - img (np.ndarray): The image data
@@ -52,8 +52,11 @@ class Model():
         :param path: str
         :return: None
         '''
-        self.img = cv.imread(path, cv.IMREAD_GRAYSCALE)
-        self.height, self.width = self.img.shape
+        try:
+            self.img = cv.imread(path, cv.IMREAD_GRAYSCALE)
+            self.height, self.width = self.img.shape
+        except Exception as e:
+            raise ValueError(f"An error occurred while loading the image: {e}")
 
 
     def register(self, feature: str) -> None:
@@ -170,23 +173,21 @@ class Model():
             print(f" KeyPoints: \n {self.kp} \n\n Descriptors: \n{self.des}\n\n")
 
 
-    def save_to_npz(self) -> None:
-        np.savez("RegisterParams", kp=self.kp, des=self.des)
+    def save_to_npz(self, filename: str) -> None:
+        ''' Save the model attributes to a .npz file '''
+        np.savez(filename, img=self.img, height=self.height, width=self.width,
+                 kp=self.kp, des=self.des, vol=self.vol,
+                 camera_params=self.camera_params, method=self.method)
 
-    def _check(self, path_params: str, path_img: str) -> None:
-        self.load_camera_params(path_params)
-        self.upload_image(path_img)
-        for feature in ["ORB", "KAZE", "AKAZE", "BRISK", "SIFT"]:
-            self.register(feature)
-            print(f"Feature: {feature}\n\n")
-            print(f" KeyPoints: \n {self.kp} \n\n Descriptors: \n{self.des}\n\n")
-
-    def save_to_npz(self) -> None:
-        np.savez("RegisterParams", kp=self.kp, des=self.des)
+    @classmethod
+    def load(cls, filename: str) -> 'Model':
+        ''' Load model attributes from a .npz file and create a Model instance '''
+        data = np.load(filename, allow_pickle=True)
+        return cls(img=data['img'], height=data['height'], width=data['width'],
+                   kp=data['kp'].tolist(), des=data['des'],
+                   vol=data['vol'], camera_params=data['camera_params'].item(), method=data['method'])
 
 
-    def get_params(self) -> (list, np.ndarray):
-        return self.kp, self.des
 
 #
 #model = Model()
