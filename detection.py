@@ -6,9 +6,10 @@ from registration import Model
 class Detector():
 
 
-    def __init__(self):
-        self.model: Model = Model()
+    def __init__(self, model=None):
         self.images: np.ndarray((-1, 2))
+        self.kp: list = []
+        self.des: np.ndarray = np.empty((0, 0))
 
 
     def load_camera_params(self, path) -> None:
@@ -17,6 +18,17 @@ class Detector():
         file to self.camera_params
         :return: None
         '''
+        pass
+
+
+    def load_model_params(self, path) -> None:
+        '''
+        This function should load kp and des
+        from file that was created with model.save_to_npz
+        :return: None
+        '''
+
+
         pass
 
 

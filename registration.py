@@ -165,6 +165,21 @@ class Model():
     def save_to_npz(self) -> None:
         np.savez("RegisterParams", kp=self.kp, des=self.des)
 
+    def _check(self, path_params: str, path_img: str) -> None:
+        self.load_camera_params(path_params)
+        self.upload_image(path_img)
+        for feature in ["ORB", "KAZE", "AKAZE", "BRISK", "SIFT"]:
+            self.register(feature)
+            print(f"Feature: {feature}\n\n")
+            print(f" KeyPoints: \n {self.kp} \n\n Descriptors: \n{self.des}\n\n")
+
+    def save_to_npz(self) -> None:
+        np.savez("RegisterParams", kp=self.kp, des=self.des)
+
+
+    def get_params(self) -> (list, np.ndarray):
+        return self.kp, self.des
+
 
 #model = Model()
 #model._check("./CameraParams/CameraParams.npz", "./old_files/DanielFiles/book.jpg")
