@@ -8,12 +8,12 @@ class Model():
         '''
         Attributes:
         - img (np.ndarray): The image data
-        - kp (tuple): Key points detected in the image
+        - kp (list): Key points detected in the image
         - des (np.ndarray): Descriptors for the key points
         - height (int): The height of the object (needed for 3d rectangle frame)
         - camera_params (dict): Dictionary containing camera parameters
         '''
-        self.img: np.ndarray = np.empty((0, 0))
+        self.img: np.ndarray = None
         self.kp: list = []
         self.des: np.ndarray = np.empty((0, 0))
         self.height: int = 0
@@ -27,14 +27,16 @@ class Model():
         path should be .npz file
         :return: None
         '''
-        with np.load(path) as file:
-            self.camera_params = {
-                "mtx": file['cameraMatrix'],
-                "dist": file['dist'],
-                "rvecs": file['rvecs'],
-                "tvecs": file['tvecs']
-            }
-
+        if path.endswith('.npz'):
+            with np.load(path) as file:
+                self.camera_params = {
+                    "mtx": file['cameraMatrix'],
+                    "dist": file['dist'],
+                    "rvecs": file['rvecs'],
+                    "tvecs": file['tvecs']
+                }
+        else:
+            print('Error: it is not .npz file')
 
     def upload_image(self, path: str) -> None:
         '''
@@ -53,6 +55,7 @@ class Model():
         :param feature: Feature detection method to use ("ORB", "KAZE", "AKAZE", "BRISK", "SIFT")
         :return: None
         '''
+        assert self.img is not None, 'Image should be loaded first'
         if feature == "ORB":
             method = cv.ORB.create()
         elif feature == "KAZE":
@@ -67,6 +70,11 @@ class Model():
             raise ValueError("Unsupported feature type.")
 
         self.kp, self.des = method.detectAndCompute(self.img, None)
+
+
+    def get_params(self) -> (list, np.ndarray):
+        return self.kp, self.des
+
 
     def crop_image_by_points(self, points: np.ndarray) -> None:
         '''
@@ -145,4 +153,19 @@ class Model():
             print("Error: Insufficient points selected!")
 
 
+    def _check(self, path_params: str, path_img: str) -> None:
+        self.load_camera_params(path_params)
+        self.upload_image(path_img)
+        for feature in ["ORB", "KAZE", "AKAZE", "BRISK", "SIFT"]:
+            self.register(feature)
+            print(f"Feature: {feature}\n\n")
+            print(f" KeyPoints: \n {self.kp} \n\n Descriptors: \n{self.des}\n\n")
 
+
+    def save_to_npz(self) -> None:
+        np.savez("RegisterParams", kp=self.kp, des=self.des)
+
+
+#model = Model()
+#model._check("./CameraParams/CameraParams.npz", "./old_files/DanielFiles/book.jpg")
+#model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
