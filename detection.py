@@ -10,6 +10,7 @@ class Detector():
         self.images: np.ndarray((-1, 2))
         self.kp: list = []
         self.des: np.ndarray = np.empty((0, 0))
+        self.camera_params: dict = {}
 
 
     def load_camera_params(self, path) -> None:
@@ -18,7 +19,13 @@ class Detector():
         file to self.camera_params
         :return: None
         '''
-        pass
+        if path.endswith('.npz'):
+            with np.load(path) as file:
+                mtx, dist, rvecs, tvecs = [file[i] for i in ('cameraMatrix', 'dist', 'rvecs', 'tvecs')]
+                self.camera_params["mtx"] = mtx
+                self.camera_params["dist"] = dist
+                self.camera_params["rvecs"] = rvecs
+                self.camera_params["tvecs"] = tvecs
 
 
     def load_model_params(self, path) -> None:
@@ -27,9 +34,10 @@ class Detector():
         from file that was created with model.save_to_npz
         :return: None
         '''
+        if path.endswith('.npz'):
+            with np.load(path) as file:
+                self.kp, self.des = [file[i] for i in ('RegisterParams', 'kp', 'des')]
 
-
-        pass
 
 
     def detect_video(self) -> None:
@@ -48,6 +56,7 @@ class Detector():
         self.draw_box
         :return: None
         '''
+        img = cv.imread(fname)
         pass
 
 
