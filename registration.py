@@ -19,12 +19,13 @@ class Model():
         path should be .npz file
         :return: None
         '''
-        with np.load(path) as file:
-            mtx, dist, rvecs, tvecs = [file[i] for i in ('cameraMatrix', 'dist', 'rvecs', 'tvecs')]
-            self.camera_params["mtx"] = mtx
-            self.camera_params["dist"] = dist
-            self.camera_params["rvecs"] = rvecs
-            self.camera_params["tvecs"] = tvecs
+        if path.endswith('.npz'):
+            with np.load(path) as file:
+                mtx, dist, rvecs, tvecs = [file[i] for i in ('cameraMatrix', 'dist', 'rvecs', 'tvecs')]
+                self.camera_params["mtx"] = mtx
+                self.camera_params["dist"] = dist
+                self.camera_params["rvecs"] = rvecs
+                self.camera_params["tvecs"] = tvecs
 
 
     def upload_image(self, path: str) -> None:
@@ -34,7 +35,7 @@ class Model():
         :param path: str
         :return: None
         '''
-        self.img = cv.imread('path', cv.IMREAD_GRAYSCALE)
+        self.img = cv.imread(path, cv.IMREAD_GRAYSCALE)
 
 
     def register(self, feature: str) -> None:
@@ -70,4 +71,18 @@ class Model():
         pass
 
 
+    def _check(self, path_params: str, path_img: str) -> None:
+        self.load_camera_params(path_params)
+        self.upload_image(path_img)
+        for feature in ["ORB", "KAZE", "AKAZE", "BRISK", "SIFT"]:
+            self.register(feature)
+            print(f"Feature: {feature}\n\n")
+            print(f" KeyPoints: \n {self.kp} \n\n Descriptors: \n{self.des}\n\n")
 
+
+    def save_to_npz(self) -> None:
+        np.savez("RegisterParams", kp=self.kp, des=self.des)
+
+
+#model = Model()
+#model._check("./CameraParams/CameraParams.npz", "./old_files/DanielFiles/book.jpg")
