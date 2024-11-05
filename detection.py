@@ -30,6 +30,25 @@ class Detector():
             p_2d[i][1] = v
 
         return p_2d
+
+
+    def load_camera_params(self, path) -> None:
+        '''
+        This function should load params from
+        file to self.camera_params
+        path should be .npz file
+        :return: None
+        '''
+        if path.endswith('.npz'):
+            with np.load(path) as file:
+                self.camera_params = {
+                    "mtx": file['cameraMatrix'],
+                    "dist": file['dist'],
+                    "rvecs": file['rvecs'],
+                    "tvecs": file['tvecs']
+                }
+        else:
+            print('Error: it is not .npz file')
     def instance_method(self, useFlann=True) -> None:
         '''
         Func to instance descriptor and matcher
@@ -49,7 +68,7 @@ class Detector():
         else:
             raise ValueError("Unsupported feature type.")
 
-        if self.registration_params['method'] in ["ORB", "AKAZE", "BRISK"]:
+        if self.registration_params['method'] in ["SIFT", "KAZE"]:
             if useFlann:
                 FLANN_INDEX_KDTREE = 1
                 index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
@@ -57,30 +76,12 @@ class Detector():
                 self.matcher = cv.FlannBasedMatcher(index_params, search_params)
             else:
                 self.matcher = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
-        else:
+        elif self.registration_params['method'] in ["ORB", "AKAZE", "BRISK"]:
             if useFlann:
-                FLANN_INDEX_KDTREE = 1
-                index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-                search_params = dict(checks=50)
-                self.matcher = cv.FlannBasedMatcher(index_params, search_params)
-            else:
-                self.matcher = cv.BFMatcher()
-
-
-
-    def load_camera_params(self, path) -> None:
-        '''
-        This function should load params from
-        file to self.camera_params
-        :return: None
-        '''
-        if path.endswith('.npz'):
-            with np.load(path) as file:
-                mtx, dist, rvecs, tvecs = [file[i] for i in ('cameraMatrix', 'dist', 'rvecs', 'tvecs')]
-                self.camera_params["mtx"] = mtx
-                self.camera_params["dist"] = dist
-                self.camera_params["rvecs"] = rvecs
-                self.camera_params["tvecs"] = tvecs
+                print("cant use Flann")
+            self.matcher = cv.BFMatcher(cv.NORM_HAMMING)
+        else:
+            self.matcher = cv.BFMatcher()
 
 
     def load_model_params(self, path) -> None:
@@ -92,73 +93,103 @@ class Detector():
         if path.endswith('.npz'):
             with np.load(path) as file:
                 self.registration_params = {
+                    "img": file['img'],
+                    "height": file['height'],
+                    "width": file['width'],
                     "kp": file['kp'],
                     "des": file['des'],
-                    "w": file['w'],
-                    "h": file['h'],
-                    "Method": file['method']
+                    "vol": file['vol'],
+                    "camera_params": file['camera_params'],
+                    "method": file['method']
                 }
         else:
             print('Error: it is not .npz file')
 
 
+    def get_model_params(self, model: Model) -> None:
+        '''
+        This function should load kp and des
+        from file that was created with model.save_to_npz
+        :return: None
+        '''
+        self.registration_params = {
+            "img": model.img,
+            "height": model.height,
+            "width": model.width,
+            "kp": model.kp,
+            "des": model.des,
+            "vol": model.vol,
+            "camera_params": model.camera_params,
+            "method": model.method
+        }
 
-    def detect_video(self) -> None:
+
+
+    def detect_video(self, path) -> None:
         '''
         This function should detect object in video and
         draw box. Then save to self.detected_images
         using self.detect_image
         :return: None
         '''
+        self._upload_video(path)
         ind = 0
-        height, width = self.registration_params["h"], self.registration_params["w"]
-        out = cv.VideoWriter('output_video.mp4', 0, 30.0, (width, height))
-        while True:
-            frame = self.detect_image('./videoframes/frame_' + str(ind) + '.png', out)
+        image = cv.imread('./videoframes/frame_0.png')
+        height, width = image.shape[:2]
+        out = cv.VideoWriter('output_video.mp4', cv.VideoWriter_fourcc('m', 'p', '4', 'v'), 5.0, (width, height))
+        while ind < 90:
+            print(ind)
+            frame = self.detect_image('./videoframes/frame_' + str(ind) + '.png', drawMatch=False)
             if frame is None:
                 break
+            #plt.imshow(frame, 'gray'), plt.show()
             ind += 1
             out.write(frame)
 
         out.release()
 
-    def detect_image(self, path, useFlann=True):
+    def detect_image(self, path, useFlann=True, drawMatch=False):
         '''
         This function should detect object on image and
         draw box. Then save to self.detected_images using
         self.draw_box
         :return: None
         '''
+        img_colored = cv.imread(path)
         img2 = self._upload_image(path)
+        imgRes = img2
+        if img2 is None:
+            return None
         kp1, des1 = self.registration_params["kp"], self.registration_params["des"]
         kp2, des2 = self.descriptor.detectAndCompute(img2, None)
-        matches = self.matcher.knnMatch(des1, des2)
-        good = self._lowes_ratio_test(matches, 0.7)
+        matches = self.matcher.knnMatch(des1, des2, 2)
+        good = self._lowes_ratio_test(matches, 0.6)
         if len(good) > self.MIN_MATCH_COUNT:
             src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
             dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
 
-            h, w = self.registration_params["h"], self.registration_params["w"]
+            h, w = self.registration_params["height"], self.registration_params["width"]
             M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
             matchesMask = mask.ravel().tolist()
-            pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1, 2)
+            pts = np.float32([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1], [w - 1, w - 1], [0, w - 1]]).reshape(-1, 1, 2)
             dst = cv.perspectiveTransform(pts, M)
 
-            img2 = cv.polylines(img2, [np.int32(dst)], True, 255, 3, cv.LINE_AA)
-            img2 = self._draw_box(img2, dst, dst_pts, good, matchesMask)
+            #imgRes = cv.polylines(img_colored, [np.int32(dst)], True, 255, 3, cv.LINE_AA)
+            imgRes = self._draw_box(img_colored, dst, dst_pts, good, matchesMask)
         else:
             print("Not enough matches are found - {}/{}".format(len(good), self.MIN_MATCH_COUNT))
             matchesMask = None
 
-        draw_params = dict(matchColor=(0, 255, 0),  # draw matches in green color
-                           singlePointColor=None,
-                           matchesMask=matchesMask,  # draw only inliers
-                           flags=2)
-        img1 = self._upload_image(self.registration_params["path"])
-        img3 = cv.drawMatches(img1, kp1, img2, kp2, good, None, **draw_params)
-        plt.imshow(img3, 'gray'), plt.show()
+        if drawMatch:
+            draw_params = dict(matchColor=(0, 255, 0),  # draw matches in green color
+                               singlePointColor=None,
+                               matchesMask=matchesMask,  # draw only inliers
+                               flags=2)
+            img1 = self.registration_params["img"]
+            img3 = cv.drawMatches(img1, kp1, img2, kp2, good, None, **draw_params)
+            plt.imshow(img3, 'gray'), plt.show()
 
-        return img2
+        return imgRes
 
 
     def _draw_box(self, img, dst, dst_pts, good, matchesMask):
@@ -170,7 +201,7 @@ class Detector():
         '''
         img2 = cv.polylines(img, [np.int32(dst[:4, :, :])], True, (0, 255, 255), 6)
         h2, w2 = img2.shape[:2]
-        w, h, z = self.registration_params["w"], self.registration_params["h"], self.registration_params["z"]
+        w, h, z = self.registration_params["width"], self.registration_params["height"], self.registration_params["vol"]
         mtx, dist = self.camera_params["mtx"], self.camera_params["dist"]
         newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w2, h2), 1, (w2, h2))
         objPoints = np.array([[0., 0., 0.], [w - 1, 0., 0.], [w - 1, w - 1, 0.], [0., w - 1, 0.]])
@@ -207,7 +238,7 @@ class Detector():
         '''
         return cv.imread(path, cv.IMREAD_GRAYSCALE)
 
-    def upload_video(self, path: str) -> None:
+    def _upload_video(self, path: str) -> None:
         '''
         This func should upload video using cv
         from given path and save as array of images
@@ -236,7 +267,19 @@ class Detector():
     def _lowes_ratio_test(self, matches, coeff=0.7) -> list:
         good = []
         for m, n in matches:
-            if m.distance < 0.7 * n.distance:
+            if m.distance < coeff * n.distance:
                 good.append(m)
 
         return good
+
+
+model = Model()
+model.load_camera_params("./CameraParams/CameraParams.npz")
+model.upload_image("./old_files/DanielFiles/book.jpg")
+model.register("KAZE")
+detector = Detector()
+detector.get_model_params(model)
+detector.load_camera_params("./CameraParams/CameraParams.npz")
+detector.instance_method(True)
+detector.detect_image("./examples/images/check_image_book.png", useFlann=True, drawMatch=True)
+detector.detect_video("./examples/videos/book_video.mp4")
