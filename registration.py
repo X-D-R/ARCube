@@ -5,11 +5,12 @@ import pickle
 
 class Model():
 
-    def __init__(self, img: np.ndarray = None, height: int = 0, width: int = 0, kp: list = None,
+    def __init__(self, img: np.ndarray = None, output_path: str = '', height: int = 0, width: int = 0, kp: list = None,
                  des: np.ndarray = np.empty((0, 0)), vol: int = 0, camera_params: dict = None, method: str = ''):
         '''
         Attributes:
         - img (np.ndarray): The image data
+        - output_path (str): The place where the Model img contains
         - height (int): The height of the picture
         - width (int): The width of the picture
         - kp (list): Key points detected in the image
@@ -19,6 +20,7 @@ class Model():
         - method (str): feature detection method to use ("ORB", "KAZE", "AKAZE", "BRISK", "SIFT")
         '''
         self.img: img
+        self.output_path = output_path
         self.height = height
         self.width = width
         self.kp = kp
@@ -46,17 +48,21 @@ class Model():
         else:
             print('Error: it is not .npz file')
 
-    def upload_image(self, path: str) -> None:
+    def upload_image(self, input_path: str, output_path: str, vol: int = 0) -> None:
         '''
         This func should upload image using cv
         from given path and save to self.img
-        :param path: str
+        :param input_path: str, to upload photo
+        :param output_path: str, to place where the Model img contains
+        :param vol: int, the volume of the object (needed for 3d rectangle frame)
         :return: None
         '''
         try:
-            self.img = cv.imread(path, cv.IMREAD_GRAYSCALE)
+            self.img = cv.imread(input_path, cv.IMREAD_GRAYSCALE)
             self.height, self.width = self.img.shape
-            self.vol = int(input("Input volume:"))
+            self.vol = vol
+            self.output_path = output_path
+            cv.imwrite(self.output_path, self.img)
         except Exception as e:
             raise ValueError(f"An error occurred while loading the image: {e}")
 
@@ -133,6 +139,7 @@ class Model():
             warped = cv.warpPerspective(self.img, matrix, (max_width, max_height))
             self.img = warped
             self.height, self.width = self.img.shape
+            cv.imwrite(self.output_path, self.img)
         else:
             print("Error: Insufficient points selected!")
 
@@ -183,19 +190,20 @@ class Model():
             print("Error: Insufficient points selected!")
 
 
-    def _check(self, path_params: str, path_img: str) -> None:
+    def _check(self, path_params: str, path_img: str, output_path: str) -> None:
         self.load_camera_params(path_params)
-        self.upload_image(path_img)
+        self.upload_image(path_img, output_path)
         for feature in ["ORB", "KAZE", "AKAZE", "BRISK", "SIFT"]:
             self.register(feature)
             print(f"Feature: {feature}\n\n")
             print(f" KeyPoints: \n {self.kp} \n\n Descriptors: \n{self.des}\n\n")
 
+
     def save_to_npz(self, filename: str) -> None:
         ''' Save model attributes to a .npz file '''
         keypoints = [{'pt': kp.pt, 'size': kp.size, 'angle': kp.angle, 'response': kp.response,
                       'octave': kp.octave, 'class_id': kp.class_id} for kp in self.kp]
-        np.savez(filename, img=self.img, height=self.height, width=self.width,
+        np.savez(filename, output_path=self.output_path, height=self.height, width=self.width,
                  kp=keypoints, des=self.des, vol=self.vol, camera_params=self.camera_params,
                  method=self.method)
 
@@ -205,15 +213,16 @@ class Model():
         ''' Load model attributes from a .npz file and create a Model instance '''
         data = np.load(filename, allow_pickle=True)
 
-        if 'img' not in data:
-            raise ValueError("The file does not contain the 'img' attribute.")
+        if 'output_path' not in data:
+            raise ValueError("The file does not contain the 'output_path' attribute.")
 
         keypoints = [cv.KeyPoint(kp['pt'][0], kp['pt'][1], kp['size'], kp['angle'],
                                  kp['response'], kp['octave'], kp['class_id'])
                      for kp in data['kp']]
 
-        return cls(
-            img=data['img'],  # Ensuring 'img' is loaded correctly
+        new_object = cls(
+            img=None,
+            output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray) else data['output_path']),
             height=data['height'].item() if 'height' in data else None,
             width=data['width'].item() if 'width' in data else None,
             kp=keypoints,
@@ -222,45 +231,46 @@ class Model():
             camera_params=data['camera_params'].item() if 'camera_params' in data else None,
             method=data['method'] if 'method' in data else None
         )
+        output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray) else data['output_path'])
+        new_object.upload_image(output_path,output_path)
+        return new_object
 
 
-
+# #
+# #model = Model()
+# #model.load_camera_params("./CameraParams/CameraParams.npz")
+# #model.upload_image("./old_files/DanielFiles/book.jpg")
+# #model.register("ORB")
+# #model.save_to_npz("book_reg")
+# #model._check("./CameraParams/CameraParams.npz", "./old_files/DanielFiles/book.jpg")
 #
-#model = Model()
-#model.load_camera_params("./CameraParams/CameraParams.npz")
-#model.upload_image("./old_files/DanielFiles/book.jpg")
-#model.register("ORB")
-#model.save_to_npz("book_reg")
-#model._check("./CameraParams/CameraParams.npz", "./old_files/DanielFiles/book.jpg")
-'''
-#model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
-
-model = Model()
-model.upload_image('old_files/andrew photo video/messy krivoy.jpg')
-model.load_camera_params('CameraParams/CameraParams.npz')
-'''
-points = np.array(((340, 230), (808, 368), (570, 1140), (92, 969)))
-model.crop_image_by_points(points)
-cv.waitKey(0)
-cv.imshow('Cropped Image', model.img)
-cv.waitKey(0)
-
-model.crop_image_by_clicks()
-cv.waitKey(0)
-cv.imshow('Cropped Image2', model.img)
-cv.waitKey(0)
-'''
-
-model.register('SIFT')
-
-path='testmodel.npz'
-model.save_to_npz(path)
-
-model2=Model.load(path)
-print(model2.kp,model2.des,model2.vol,model2.camera_params,model2.method,model2.height,model2.width)
-cv.waitKey(0)
-cv.imshow(' Image m2', model2.img)
-cv.waitKey(0)
-'''
-#model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
+# #model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
 #
+# model = Model()
+# model.upload_image('old_files/andrew photo video/messy krivoy.jpg','testmodel.jpg')
+# model.load_camera_params('CameraParams/CameraParams.npz')
+# '''
+# points = np.array(((340, 230), (808, 368), (570, 1140), (92, 969)))
+# model.crop_image_by_points(points)
+# cv.waitKey(0)
+# cv.imshow('Cropped Image', model.img)
+# cv.waitKey(0)
+#
+# model.crop_image_by_clicks()
+# cv.waitKey(0)
+# cv.imshow('Cropped Image2', model.img)
+# cv.waitKey(0)
+# '''
+#
+# model.register('SIFT')
+#
+# path='testmodel.npz'
+# model.save_to_npz(path)
+#
+# model2=Model.load(path)
+# print(model2.kp,model2.des,model2.vol,model2.camera_params,model2.method,model2.height,model2.width)
+# cv.waitKey(0)
+# cv.imshow(' Image m2', model2.img)
+# cv.waitKey(0)
+#
+# #model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
