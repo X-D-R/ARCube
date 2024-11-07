@@ -272,14 +272,3 @@ class Detector():
 
         return good
 
-
-model = Model()
-model.load_camera_params("./CameraParams/CameraParams.npz")
-model.upload_image("./old_files/DanielFiles/book.jpg")
-model.register("KAZE")
-detector = Detector()
-detector.get_model_params(model)
-detector.load_camera_params("./CameraParams/CameraParams.npz")
-detector.instance_method(True)
-detector.detect_image("./examples/images/check_image_book.png", useFlann=True, drawMatch=True)
-detector.detect_video("./examples/videos/book_video.mp4")
