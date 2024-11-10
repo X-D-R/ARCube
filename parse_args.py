@@ -5,6 +5,19 @@ import numpy as np
 
 
 def register(args):
+    '''
+     Register an image by loading camera parameters, cropping the image using the specified method,
+     detecting features, and saving the model to a file.
+     params:
+         args : The arguments parsed from the command line. Expected arguments include:
+               - camera_params: Path to camera parameters file.
+               - input_image: Path to the input image to be registered.
+               - output_image: Path where the registered image will be saved.
+               - crop_method: Cropping method (clicks, points, or none).
+               - points: List of 8 coordinates (x1 y1 x2 y2 x3 y3 x4 y4) if crop_method is 'points'.
+               - feature_method: Method for feature detection (ORB, KAZE, AKAZE, BRISK, SIFT).
+               - model_output: Path to save the model parameters.
+    '''
     model = Model()
     model.load_camera_params(args.camera_params)
     model.upload_image(args.input_image, args.output_image)
@@ -31,6 +44,17 @@ def register(args):
 
 
 def detect(args):
+    '''
+    Detect features in an image or video.
+    params:
+        args : The arguments parsed from the command line. Expected arguments include:
+              - model_input: Path to the saved model file.
+              - camera_params: Path to the camera parameters file (optional for detection).
+              - input_image: Path to the input image for detection (optional).
+              - input_video: Path to the input video for detection (optional).
+              - use_flann: Flag to use FLANN-based matching (optional).
+              - draw_match: Flag to draw matches on the detected image (optional).
+    '''
     model = Model.load(args.model_input)
     detector = Detector()
     detector.get_model_params(model)
@@ -49,6 +73,8 @@ def detect(args):
 
 
 def parse_args_and_execute():
+    '''Parse command-line arguments and execute the appropriate function (register or detect)'''
+
     parser = argparse.ArgumentParser(description="Registration and Detection")
 
     subparsers = parser.add_subparsers(dest="command")

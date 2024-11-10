@@ -1,6 +1,5 @@
 import numpy as np
 import cv2 as cv
-import pickle
 
 
 class Model():
@@ -203,8 +202,11 @@ class Model():
         ''' Save model attributes to a .npz file '''
         keypoints = [{'pt': kp.pt, 'size': kp.size, 'angle': kp.angle, 'response': kp.response,
                       'octave': kp.octave, 'class_id': kp.class_id} for kp in self.kp]
+        camera_params = {"mtx": self.camera_params["mtx"], "dist": self.camera_params["dist"],
+                          "rvecs": self.camera_params["rvecs"], "tvecs": self.camera_params["tvecs"]}
+
         np.savez(filename, output_path=self.output_path, height=self.height, width=self.width,
-                 kp=keypoints, des=self.des, vol=self.vol, camera_params=self.camera_params,
+                 kp=keypoints, des=self.des, vol=self.vol, camera_params=camera_params,
                  method=self.method)
 
         
@@ -220,57 +222,29 @@ class Model():
                                  kp['response'], kp['octave'], kp['class_id'])
                      for kp in data['kp']]
 
+        camera_params = data['camera_params'].item()
+        mtx = camera_params.get('mtx', None)
+        dist = camera_params.get('dist', None)
+        rvecs = camera_params.get('rvecs', None)
+        tvecs = camera_params.get('tvecs', None)
+        camera_params_dict = {"mtx": mtx, "dist": dist, "rvecs": rvecs, "tvecs": tvecs}
+
         new_object = cls(
             img=None,
-            output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray) else data['output_path']),
+            output_path=str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray)
+                              else data['output_path']),
             height=data['height'].item() if 'height' in data else None,
             width=data['width'].item() if 'width' in data else None,
             kp=keypoints,
             des=data['des'] if 'des' in data else None,
             vol=data['vol'] if 'vol' in data else None,
-            camera_params=data['camera_params'].item() if 'camera_params' in data else None,
+            camera_params=camera_params_dict,
             method=data['method'] if 'method' in data else None
         )
-        output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray) else data['output_path'])
+        output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray)
+                          else data['output_path'])
         new_object.upload_image(output_path,output_path)
         return new_object
 
 
-# #
-# #model = Model()
-# #model.load_camera_params("./CameraParams/CameraParams.npz")
-# #model.upload_image("./old_files/DanielFiles/book.jpg")
-# #model.register("ORB")
-# #model.save_to_npz("book_reg")
-# #model._check("./CameraParams/CameraParams.npz", "./old_files/DanielFiles/book.jpg")
-#
-# #model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
-#
-# model = Model()
-# model.upload_image('old_files/andrew photo video/messy krivoy.jpg','testmodel.jpg')
-# model.load_camera_params('CameraParams/CameraParams.npz')
-# '''
-# points = np.array(((340, 230), (808, 368), (570, 1140), (92, 969)))
-# model.crop_image_by_points(points)
-# cv.waitKey(0)
-# cv.imshow('Cropped Image', model.img)
-# cv.waitKey(0)
-#
-# model.crop_image_by_clicks()
-# cv.waitKey(0)
-# cv.imshow('Cropped Image2', model.img)
-# cv.waitKey(0)
-# '''
-#
-# model.register('SIFT')
-#
-# path='testmodel.npz'
-# model.save_to_npz(path)
-#
-# model2=Model.load(path)
-# print(model2.kp,model2.des,model2.vol,model2.camera_params,model2.method,model2.height,model2.width)
-# cv.waitKey(0)
-# cv.imshow(' Image m2', model2.img)
-# cv.waitKey(0)
-#
-# #model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
+

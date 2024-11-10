@@ -122,7 +122,7 @@ class Detector():
             "camera_params": model.camera_params,
             "method": model.method
         }
-
+        self.camera_params = model.camera_params
 
 
     def detect_video(self, path) -> None:
