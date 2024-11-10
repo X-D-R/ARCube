@@ -1,6 +1,5 @@
 import numpy as np
 import cv2 as cv
-import pickle
 
 
 class Model():
@@ -203,8 +202,11 @@ class Model():
         ''' Save model attributes to a .npz file '''
         keypoints = [{'pt': kp.pt, 'size': kp.size, 'angle': kp.angle, 'response': kp.response,
                       'octave': kp.octave, 'class_id': kp.class_id} for kp in self.kp]
+        camera_params = {"mtx": self.camera_params["mtx"], "dist": self.camera_params["dist"],
+                          "rvecs": self.camera_params["rvecs"], "tvecs": self.camera_params["tvecs"]}
+
         np.savez(filename, output_path=self.output_path, height=self.height, width=self.width,
-                 kp=keypoints, des=self.des, vol=self.vol, camera_params=self.camera_params,
+                 kp=keypoints, des=self.des, vol=self.vol, camera_params=camera_params,
                  method=self.method)
 
         
@@ -220,18 +222,29 @@ class Model():
                                  kp['response'], kp['octave'], kp['class_id'])
                      for kp in data['kp']]
 
+        camera_params = data['camera_params'].item()
+        mtx = camera_params.get('mtx', None)
+        dist = camera_params.get('dist', None)
+        rvecs = camera_params.get('rvecs', None)
+        tvecs = camera_params.get('tvecs', None)
+        camera_params_dict = {"mtx": mtx, "dist": dist, "rvecs": rvecs, "tvecs": tvecs}
+
         new_object = cls(
             img=None,
-            output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray) else data['output_path']),
+            output_path=str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray)
+                              else data['output_path']),
             height=data['height'].item() if 'height' in data else None,
             width=data['width'].item() if 'width' in data else None,
             kp=keypoints,
             des=data['des'] if 'des' in data else None,
             vol=data['vol'] if 'vol' in data else None,
-            camera_params=data['camera_params'].item() if 'camera_params' in data else None,
+            camera_params=camera_params_dict,
             method=data['method'] if 'method' in data else None
         )
-        output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray) else data['output_path'])
+        output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray)
+                          else data['output_path'])
         new_object.upload_image(output_path,output_path)
         return new_object
+
+
 
