@@ -8,7 +8,8 @@ This project provides tools for registrating and detecting objects (images) in i
 2. [Requirements](#requirements)
 3. [Installation](#installation)
 4. [Usage](#usage)
-5. [License](#license)
+5. [Scripts](#scripts)
+6. [License](#license)
 
 ## Description
 
@@ -18,6 +19,7 @@ This project enables:
 - Registrating object from image for futher detection.
 - Detecting an object in images and videos using algorithms: "ORB", "KAZE", "AKAZE", "BRISK", "SIFT".
 - Displaying and saving detection results as image or video.
+- Using all the project features by scripts
 
 ## Requirements
 
@@ -25,6 +27,7 @@ This project enables:
 - OpenCV (cv2)
 - NumPy
 - Matplotlib (for visualization)
+- pyparsing
 
 You can install it using the `requirements.txt` file.
 
@@ -91,6 +94,54 @@ detector.instance_method(True)
 detector.detect_image('path/to/target_image.jpg', useFlann=True, drawMatch=True) #or
 #detector.detect_video('path/to/target_video.mp4'")
 ```
+## Scripts
+### Running the Script with Command-Line Arguments
+You can also run the script directly from the command line using argparse to specify the parameters. This allows you to register images or detect objects via terminal commands.
+Examples presented below.
+
+1. **Register an Image**
+Use the following command to register an image:
+
+```python
+python main.py register --camera_params "CameraParams/CameraParams.npz" \
+                        --input_image "old_files/andrew photo video/reference messy.jpg" \
+                        --output_image "output_script_test.jpg" \
+                        --crop_method "none" \
+                        --feature_method "SIFT" \
+                        --model_output "model_script_test.npz"
+```
+
+2. **Detect Features in an Image or Video**
+Use the following command to detect features:
+
+```python
+python main.py detect --model_input "model_script_test.npz" \
+                     --input_image "old_files/andrew photo video/second pic messy.jpg" \
+                     --use_flann \
+                     --draw_match
+
+```
+
+3. **Arguments:**
+
+   **Register subcommand:**
+   
+- --camera_params: Path to camera parameters file.
+- --input_image: Path to input image for registration.
+- --output_image: Path to save the registered image.
+- --crop_method: Method for cropping the image (options: clicks, points, none).
+- --points: Points for cropping (required if crop_method is points).
+- --feature_method: Feature detection method (ORB, KAZE, AKAZE, BRISK, SIFT).
+- --model_output: Path to save the model parameters.
+
+   **Detect subcommand:**
+   
+- --model_input: Path to the saved model file.
+- --camera_params: (Optional) Path to the camera parameters file for detection.
+- --input_image: (Optional) Path to the input image for detection.
+- --input_video: (Optional) Path to the input video for detection.
+- --use_flann: Flag to use FLANN-based matching (for images).
+- --draw_match: Flag to draw matches on the detected image.
 
 ## License
 
