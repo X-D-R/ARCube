@@ -30,3 +30,4 @@ if __name__ == __main__:
     # Detecting image on image/video
     detector.detect_image("./examples/images/check_image_book.png", useFlann=True, drawMatch=True)
     detector.detect_video("./examples/videos/book_video.mp4")
+    #
