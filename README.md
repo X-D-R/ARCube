@@ -97,9 +97,11 @@ detector.detect_image('path/to/target_image.jpg', useFlann=True, drawMatch=True)
 ## Scripts
 ### Running the Script with Command-Line Arguments
 You can also run the script directly from the command line using argparse to specify the parameters. This allows you to register images or detect objects via terminal commands.
+
 Examples presented below.
 
 1. **Register an Image**
+
 Use the following command to register an image:
 
 ```python
@@ -112,6 +114,7 @@ python main.py register --camera_params "CameraParams/CameraParams.npz" \
 ```
 
 2. **Detect Features in an Image or Video**
+
 Use the following command to detect features:
 
 ```python
