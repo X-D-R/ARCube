@@ -235,3 +235,42 @@ class Model():
         new_object.upload_image(output_path,output_path)
         return new_object
 
+
+# #
+# #model = Model()
+# #model.load_camera_params("./CameraParams/CameraParams.npz")
+# #model.upload_image("./old_files/DanielFiles/book.jpg")
+# #model.register("ORB")
+# #model.save_to_npz("book_reg")
+# #model._check("./CameraParams/CameraParams.npz", "./old_files/DanielFiles/book.jpg")
+#
+# #model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
+#
+# model = Model()
+# model.upload_image('old_files/andrew photo video/messy krivoy.jpg','testmodel.jpg')
+# model.load_camera_params('CameraParams/CameraParams.npz')
+# '''
+# points = np.array(((340, 230), (808, 368), (570, 1140), (92, 969)))
+# model.crop_image_by_points(points)
+# cv.waitKey(0)
+# cv.imshow('Cropped Image', model.img)
+# cv.waitKey(0)
+#
+# model.crop_image_by_clicks()
+# cv.waitKey(0)
+# cv.imshow('Cropped Image2', model.img)
+# cv.waitKey(0)
+# '''
+#
+# model.register('SIFT')
+#
+# path='testmodel.npz'
+# model.save_to_npz(path)
+#
+# model2=Model.load(path)
+# print(model2.kp,model2.des,model2.vol,model2.camera_params,model2.method,model2.height,model2.width)
+# cv.waitKey(0)
+# cv.imshow(' Image m2', model2.img)
+# cv.waitKey(0)
+#
+# #model._check("./CameraParams/CameraParams.npz", "./old_files/andrew photo video/reference_messy_1.jpg")
