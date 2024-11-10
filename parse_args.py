@@ -5,23 +5,18 @@ import numpy as np
 
 
 def register(args):
-    # Создаем модель
     model = Model()
     model.load_camera_params(args.camera_params)
     model.upload_image(args.input_image, args.output_image)
 
-    # Выбор метода обрезки изображения
     if args.crop_method == "clicks":
         model.crop_image_by_clicks()
     elif args.crop_method == "points":
         if args.points:
-            # Преобразуем строки точек в массив чисел
             point_values = [int(coord) for coord in args.points]
             if len(point_values) != 8:
                 raise ValueError(
                     "Exactly 4 points (8 values: x1 y1 x2 y2 x3 y3 x4 y4) are required for 'points' crop method.")
-
-            # Преобразуем в массив numpy с формой (4, 2)
             points = np.array(point_values, dtype=np.int32).reshape(4, 2)
             model.crop_image_by_points(points)
         else:
@@ -29,22 +24,22 @@ def register(args):
     elif args.crop_method == "none":
         print("Skipping image cropping as per the selected method.")
 
-    # Регистрация изображения с использованием выбранного метода
     model.register(args.feature_method)
 
-    # Сохранение модели
     model.save_to_npz(args.model_output)
     print(f"Model saved to {args.model_output}")
 
 
 def detect(args):
-    # Загружаем параметры модели
     model = Model.load(args.model_input)
     detector = Detector()
     detector.get_model_params(model)
+
+    if args.camera_params:
+        detector.load_camera_params(args.camera_params)
+
     detector.instance_method(args.use_flann)
 
-    # Детектируем изображение или видео
     if args.input_image:
         detector.detect_image(args.input_image, useFlann=args.use_flann, drawMatch=args.draw_match)
     elif args.input_video:
@@ -75,14 +70,15 @@ def parse_args_and_execute():
     # Подкоманда для детектирования
     detect_parser = subparsers.add_parser('detect', help="Detect features in an image or video")
     detect_parser.add_argument('--model_input', type=str, required=True, help="Path to the saved model file")
+    detect_parser.add_argument('--camera_params', type=str,
+                               help="Path to camera parameters file (optional, used for detection)")
     detect_parser.add_argument('--input_image', type=str, help="Path to input image for detection")
     detect_parser.add_argument('--input_video', type=str, help="Path to input video for detection")
     detect_parser.add_argument('--use_flann', action='store_true', help="Use FLANN-based matching")
     detect_parser.add_argument('--draw_match', action='store_true', help="Draw matches on the detected image/video")
 
-    # Парсим аргументы
-    args = parser.parse_args()
 
+    args = parser.parse_args()
     if args.command == 'register':
         register(args)
     elif args.command == 'detect':
