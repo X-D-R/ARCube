@@ -93,7 +93,7 @@ class Detector():
         if path.endswith('.npz'):
             with np.load(path) as file:
                 self.registration_params = {
-                    "img": file['img'],
+                    "img": cv.imread(file[''], cv.IMREAD_GRAYSCALE),
                     "height": file['height'],
                     "width": file['width'],
                     "kp": file['kp'],
@@ -102,6 +102,7 @@ class Detector():
                     "camera_params": file['camera_params'],
                     "method": file['method']
                 }
+            self.camera_params = file['camera_params']
         else:
             print('Error: it is not .npz file')
 
