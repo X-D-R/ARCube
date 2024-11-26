@@ -4,13 +4,13 @@ from detection import Detector, detect
 
 
 def parse_args_and_execute():
-    '''Parse command-line arguments and execute the appropriate function (register or detect)'''
+    '''Parse command-line arguments and execute the appropriate function (register or detect).'''
 
     parser = argparse.ArgumentParser(description="Registration and Detection")
 
     subparsers = parser.add_subparsers(dest="command")
 
-    # Подкоманда для регистрации
+    # Subcommand for registration
     register_parser = subparsers.add_parser('register', help="Register an image")
     register_parser.add_argument('--camera_params', type=str, required=True, help="Path to camera parameters file")
     register_parser.add_argument('--input_image', type=str, required=True, help="Path to input image for registration")
@@ -21,14 +21,14 @@ def parse_args_and_execute():
                                  help="Points for cropping (format: x1 y1 x2 y2 x3 y3 x4 y4),"
                                       " required if crop_method is 'points'")
     register_parser.add_argument('--feature_method', type=str, choices=["ORB", "KAZE", "AKAZE", "BRISK", "SIFT"],
-                                 required=True, help="Feature detection method")
-    register_parser.add_argument('--model_output', type=str, required=True, help="Path to save the model parameters")
+                                 help="Feature detection method", default="ORB")
+    register_parser.add_argument('--model_output', type=str, help="Path to save the model parameters",
+                                 default="model.npz")
 
-    # Подкоманда для детектирования
+    # Subcommand for detection
     detect_parser = subparsers.add_parser('detect', help="Detect features in an image or video")
     detect_parser.add_argument('--model_input', type=str, required=True, help="Path to the saved model file")
-    detect_parser.add_argument('--camera_params', type=str,
-                               help="Path to camera parameters file (optional, used for detection)")
+    detect_parser.add_argument('--camera_params', type=str, help="Path to camera parameters file (optional)")
     detect_parser.add_argument('--input_image', type=str, help="Path to input image for detection")
     detect_parser.add_argument('--input_video', type=str, help="Path to input video for detection")
     detect_parser.add_argument('--use_flann', action='store_true', help="Use FLANN-based matching")
@@ -36,9 +36,24 @@ def parse_args_and_execute():
 
     args = parser.parse_args()
     if args.command == 'register':
-        register(args)
+        register(
+            camera_params=args.camera_params,
+            input_image=args.input_image,
+            output_image=args.output_image,
+            crop_method=args.crop_method,
+            points=args.points,
+            feature_method=args.feature_method,
+            model_output=args.model_output
+        )
     elif args.command == 'detect':
-        detect(args)
+        detect(
+            model_input=args.model_input,
+            camera_params=args.camera_params,
+            input_image=args.input_image,
+            input_video=args.input_video,
+            use_flann=args.use_flann,
+            draw_match=args.draw_match
+        )
     else:
         print("Invalid command. Use 'register' or 'detect'.")
 
