@@ -1,10 +1,10 @@
 import numpy as np
-import cv2 as cv
 from matplotlib import pyplot as plt
+import cv2 as cv
 from registration import Model
 
-class Detector():
 
+class Detector():
 
     def __init__(self, model=None):
         self.MIN_MATCH_COUNT = 10
@@ -272,3 +272,31 @@ class Detector():
 
         return good
 
+
+def detect(args):
+    '''
+    Detect features in an image or video.
+    params:
+        args : The arguments parsed from the command line. Expected arguments include:
+              - model_input: Path to the saved model file.
+              - camera_params: Path to the camera parameters file (optional for detection).
+              - input_image: Path to the input image for detection (optional).
+              - input_video: Path to the input video for detection (optional).
+              - use_flann: Flag to use FLANN-based matching (optional).
+              - draw_match: Flag to draw matches on the detected image (optional).
+    '''
+    model = Model.load(args.model_input)
+    detector = Detector()
+    detector.get_model_params(model)
+
+    if args.camera_params:
+        detector.load_camera_params(args.camera_params)
+
+    detector.instance_method(args.use_flann)
+
+    if args.input_image:
+        detector.detect_image(args.input_image, useFlann=args.use_flann, drawMatch=args.draw_match)
+    elif args.input_video:
+        detector.detect_video(args.input_video)
+    else:
+        print("No input image or video provided for detection.")

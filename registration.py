@@ -247,4 +247,41 @@ class Model():
         return new_object
 
 
+def register(args):
+    '''
+     Register an image by loading camera parameters, cropping the image using the specified method,
+     detecting features, and saving the model to a file.
+     params:
+         args : The arguments parsed from the command line. Expected arguments include:
+               - camera_params: Path to camera parameters file.
+               - input_image: Path to the input image to be registered.
+               - output_image: Path where the registered image will be saved.
+               - crop_method: Cropping method (clicks, points, or none).
+               - points: List of 8 coordinates (x1 y1 x2 y2 x3 y3 x4 y4) if crop_method is 'points'.
+               - feature_method: Method for feature detection (ORB, KAZE, AKAZE, BRISK, SIFT).
+               - model_output: Path to save the model parameters.
+    '''
+    model = Model()
+    model.load_camera_params(args.camera_params)
+    model.upload_image(args.input_image, args.output_image)
+
+    if args.crop_method == "clicks":
+        model.crop_image_by_clicks()
+    elif args.crop_method == "points":
+        if args.points:
+            point_values = [int(coord) for coord in args.points]
+            if len(point_values) != 8:
+                raise ValueError(
+                    "Exactly 4 points (8 values: x1 y1 x2 y2 x3 y3 x4 y4) are required for 'points' crop method.")
+            points = np.array(point_values, dtype=np.int32).reshape(4, 2)
+            model.crop_image_by_points(points)
+        else:
+            print("No points provided for 'points' crop method.")
+    elif args.crop_method == "none":
+        print("Skipping image cropping as per the selected method.")
+
+    model.register(args.feature_method)
+
+    model.save_to_npz(args.model_output)
+    print(f"Model saved to {args.model_output}")
 
