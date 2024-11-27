@@ -34,7 +34,6 @@ def parse_args_and_execute():
     detect_parser.add_argument('--input_video', type=str, help="Path to input video for detection")
     detect_parser.add_argument('--use_flann', action='store_true', help="Use FLANN-based matching")
     detect_parser.add_argument('--draw_match', action='store_true', help="Draw matches on the detected image/video")
-
     args = parser.parse_args()
     if args.command == 'register':
         register(
@@ -53,8 +52,8 @@ def parse_args_and_execute():
             camera_params=args.camera_params,
             input_image=args.input_image,
             input_video=args.input_video,
-            use_flann=args.use_flann if args.use_flann else False,
-            draw_match=args.draw_match if args.draw_match else False
+            use_flann=args.use_flann if args.use_flann is not None else False,
+            draw_match=args.draw_match if args.draw_match is not None else False
         )
     else:
         print("Invalid command. Use 'register' or 'detect'.")
