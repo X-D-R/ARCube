@@ -42,10 +42,10 @@ def parse_args_and_execute():
             input_image=args.input_image,
             output_image=args.output_image,
             crop_method=args.crop_method,
-            vol=args.vol,
+            vol=args.vol if args.vol is not None else '0',
             points=args.points,
-            feature_method=args.feature_method,
-            model_output=args.model_output
+            feature_method=args.feature_method if args.feature_method is not None else "ORB",
+            model_output=args.model_output if args.model_output is not None else "model.npz"
         )
     elif args.command == 'detect':
         detect(
@@ -53,8 +53,8 @@ def parse_args_and_execute():
             camera_params=args.camera_params,
             input_image=args.input_image,
             input_video=args.input_video,
-            use_flann=args.use_flann,
-            draw_match=args.draw_match
+            use_flann=args.use_flann if args.use_flann else False,
+            draw_match=args.draw_match if args.draw_match else False
         )
     else:
         print("Invalid command. Use 'register' or 'detect'.")
