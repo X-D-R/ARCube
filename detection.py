@@ -2,6 +2,7 @@ import numpy as np
 import cv2 as cv
 from matplotlib import pyplot as plt
 from registration import Model
+from random import randint
 
 class Detector():
 
@@ -137,7 +138,7 @@ class Detector():
         image = cv.imread('./videoframes/frame_0.png')
         height, width = image.shape[:2]
         out = cv.VideoWriter('output_video.mp4', cv.VideoWriter_fourcc('m', 'p', '4', 'v'), 5.0, (width, height))
-        while ind < 90:
+        while True:
             print(ind)
             frame = self.detect_image('./videoframes/frame_' + str(ind) + '.png', drawMatch=False)
             if frame is None:
@@ -171,16 +172,18 @@ class Detector():
             h, w = self.registration_params["height"], self.registration_params["width"]
             M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
             matchesMask = mask.ravel().tolist()
-            pts = np.float32([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1], [w - 1, w - 1], [0, w - 1]]).reshape(-1, 1, 2)
+            points = [[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]]
+            pts = np.float32(points).reshape(-1, 1, 2)
             dst = cv.perspectiveTransform(pts, M)
+            print(dst)
 
             #imgRes = cv.polylines(img_colored, [np.int32(dst)], True, 255, 3, cv.LINE_AA)
-            imgRes = self._draw_box(img_colored, dst, dst_pts, good, matchesMask)
+            imgRes = self._draw_box(img_colored, pts, dst, dst_pts, good, matchesMask, kp1, kp2)
         else:
             print("Not enough matches are found - {}/{}".format(len(good), self.MIN_MATCH_COUNT))
             matchesMask = None
 
-        if drawMatch:
+        if True:
             draw_params = dict(matchColor=(0, 255, 0),  # draw matches in green color
                                singlePointColor=None,
                                matchesMask=matchesMask,  # draw only inliers
@@ -192,7 +195,7 @@ class Detector():
         return imgRes
 
 
-    def _draw_box(self, img, dst, dst_pts, good, matchesMask):
+    def _draw_box(self, img, pts, dst, dst_pts, good, matchesMask, kp1, kp2):
         '''
         This function should draw box of detected
         object using given points
@@ -202,11 +205,33 @@ class Detector():
         img2 = cv.polylines(img, [np.int32(dst[:4, :, :])], True, (0, 255, 255), 6)
         h2, w2 = img2.shape[:2]
         w, h, z = self.registration_params["width"], self.registration_params["height"], self.registration_params["vol"]
-        mtx, dist = self.camera_params["mtx"], self.camera_params["dist"]
-        newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w2, h2), 1, (w2, h2))
-        objPoints = np.array([[0., 0., 0.], [w - 1, 0., 0.], [w - 1, w - 1, 0.], [0., w - 1, 0.]])
-        valid, rvec, tvec = cv.solvePnP(objPoints, dst[[True, True, False, False, True, True]], newcameramtx, dist, cv.SOLVEPNP_P3P)
-        # cv.drawFrameAxes(img2, newcameramtx, dist, rvec, tvec, 10000)
+        z = 240
+        #mtx, dist = self.camera_params["mtx"], self.camera_params["dist"]
+        #mtx = np.array([[534.07088364, 0., 341.53407554], [0., 534.11914595, 232.94565259], [0., 0., 1.]])
+        #dist = np.array([[-0.29297164, 0.10770696, 0.00131038, -0.0000311, 0.0434798]])
+        mtx = np.array([[1.36995671e+03, 0.00000000e+00, 1.01928404e+03], [0.00000000e+00, 1.37028220e+03, 7.30459096e+02], [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+        dist = np.array([[0.10918162, -0.42578296, 0.00224338, 0.00394433, 0.33036149]])
+        newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w2, h2), 0.5, (w2, h2))
+        #objPoints = np.pad(pts, [(0, 0), (0,0),(0,1)], mode='constant')
+        objPoints = np.array([[0., 0., 0.], [w-1, 0., 0.], [w-1, h-1, 0.], [0., h-1, 0.]])
+        valid, rvec, tvec = cv.solvePnP(objPoints, dst, newcameramtx, dist)
+
+        """#code for custom axes
+        def get_custom_axes(cam, dist, rvec, tvec, length=1.):
+            # set array to configure custom axes
+            axes = np.array([[0., 0., 0.], [length, 0., 0.], [0., length, 0.], [0., 0., length]])
+            axes_to_img, _ = cv.projectPoints(axes, rvec, tvec, cam, dist)
+            print(axes_to_img)
+            return np.floor(np.squeeze(axes_to_img)).astype(int)
+
+        def draw_axes(img, axes, thickness=5):
+            img = cv.line(img, axes[0], axes[0 + 1], (0, 0, 255), thickness)
+            img = cv.line(img, axes[0], axes[1 + 1], (0, 255, 0), thickness)
+            img = cv.line(img, axes[0], axes[2 + 1], (255, 0, 0), thickness)
+            return img
+        img2 = draw_axes(img2, get_custom_axes(newcameramtx, dist, rvec, tvec), 100)
+        """
+        cv.drawFrameAxes(img2, newcameramtx, dist, rvec, tvec, 200)
         rvecs = cv.Rodrigues(rvec)[0]
         objPoints = np.array(
             [[0., 0., 0.], [0., 0., z - 1], [w - 1, 0., 0.], [w - 1, 0., z - 1], [w - 1, h - 1, 0.],
@@ -216,7 +241,7 @@ class Detector():
         d2 = self._trans(objPoints, rvecs, tvec, newcameramtx, dist)
         # img2 = cv.polylines(imgS,[np.int32(d2)],True, (0, 0, 255), 2)
         diff_z = np.array(d2[1::2] - d2[::2])
-        new_dst = dst[:4, :, :] + diff_z.reshape(-1, 1, 2)
+        new_dst = dst + diff_z.reshape(-1, 1, 2)
         img2 = cv.polylines(img2, [np.int32(new_dst)], True, (0, 255, 255), 6)
         col_dst = [dst[0], new_dst[0], new_dst[1], dst[1], dst[2], new_dst[2], new_dst[3], dst[3]]
         img2 = cv.polylines(img2, [np.int32(col_dst)], True, (0, 255, 255), 6)
@@ -227,6 +252,7 @@ class Detector():
             else:
                 cv.circle(img2, pt, 5, (0, 0, 255), -1)  # Outliers красные
 
+        plt.imshow(img2), plt.show()
         return img2
 
     def _upload_image(self, path: str) -> np.ndarray:
