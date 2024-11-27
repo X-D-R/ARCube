@@ -14,7 +14,7 @@ def parse_args_and_execute():
     register_parser = subparsers.add_parser('register', help="Register an image")
     register_parser.add_argument('--camera_params', type=str, required=True, help="Path to camera parameters file")
     register_parser.add_argument('--input_image', type=str, required=True, help="Path to input image for registration")
-    register_parser.add_argument('--vol', type=str, required=True, help="Volume of the object")
+    register_parser.add_argument('--vol', type=str, help="Volume of the object")
     register_parser.add_argument('--output_image', type=str, required=True, help="Path to save the registered image")
     register_parser.add_argument('--crop_method', type=str, choices=['clicks', 'points', 'none'], required=True,
                                  help="Method for cropping the image")
@@ -40,9 +40,9 @@ def parse_args_and_execute():
         register(
             camera_params=args.camera_params,
             input_image=args.input_image,
-            vol=args.vol,
             output_image=args.output_image,
             crop_method=args.crop_method,
+            vol=args.vol,
             points=args.points,
             feature_method=args.feature_method,
             model_output=args.model_output

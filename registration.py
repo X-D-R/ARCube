@@ -240,9 +240,9 @@ class Model():
 def register(
     camera_params: str,
     input_image: str,
-    vol: str,
     output_image: str,
     crop_method: str,
+    vol: str = '0',
     points: list[str] = None,
     feature_method: str = "ORB",
     model_output: str = "model.npz"
