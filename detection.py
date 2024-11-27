@@ -83,28 +83,6 @@ class Detector():
         else:
             self.matcher = cv.BFMatcher()
 
-    def load_model_params(self, path) -> None:
-        '''
-        This function should load kp and des
-        from file that was created with model.save_to_npz
-        :return: None
-        '''
-        if path.endswith('.npz'):
-            with np.load(path) as file:
-                self.registration_params = {
-                    "img": cv.imread(file[''], cv.IMREAD_GRAYSCALE),
-                    "height": file['height'],
-                    "width": file['width'],
-                    "kp": file['kp'],
-                    "des": file['des'],
-                    "vol": file['vol'],
-                    "camera_params": file['camera_params'],
-                    "method": file['method']
-                }
-            self.camera_params = file['camera_params']
-        else:
-            print('Error: it is not .npz file')
-
     def get_model_params(self, model: Model) -> None:
         '''
         This function should load kp and des

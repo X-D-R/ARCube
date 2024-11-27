@@ -240,6 +240,7 @@ class Model():
 def register(
     camera_params: str,
     input_image: str,
+    vol: str,
     output_image: str,
     crop_method: str,
     points: list[str] = None,
@@ -253,6 +254,7 @@ def register(
     Parameters:
         camera_params (str): Path to camera parameters file.
         input_image (str): Path to the input image to be registered.
+        vol (str): The volume of the object (needed for 3d rectangle frame).
         output_image (str): Path where the registered image will be saved.
         crop_method (str): Cropping method ("clicks", "points", or "none").
         points (list[str], optional): List of 8 coordinates (x1 y1 x2 y2 x3 y3 x4 y4) for 'points' crop method.
@@ -261,7 +263,7 @@ def register(
     '''
     model = Model()
     model.load_camera_params(camera_params)
-    model.upload_image(input_image, output_image)
+    model.upload_image(input_image, output_image, int(vol))
 
     if crop_method == "clicks":
         model.crop_image_by_clicks()
