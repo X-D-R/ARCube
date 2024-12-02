@@ -1,10 +1,10 @@
 import numpy as np
-import cv2 as cv
 from matplotlib import pyplot as plt
+import cv2 as cv
 from registration import Model
 
-class Detector():
 
+class Detector():
 
     def __init__(self, model=None):
         self.MIN_MATCH_COUNT = 10
@@ -23,14 +23,13 @@ class Detector():
             y_ = p_t[1] / p_t[2]
             r_2 = np.power(x_, 2) + np.power(y_, 2)
             coeff = (1 + dist[0] * r_2 + dist[1] * np.power(r_2, 2) + dist[2] * np.power(r_2, 3)) / (
-                        1 + dist[3] * r_2 + dist[4] * np.power(r_2, 2) + dist[5] * np.power(r_2, 3))
+                    1 + dist[3] * r_2 + dist[4] * np.power(r_2, 2) + dist[5] * np.power(r_2, 3))
             u = cam_m[0][0] * x_ * coeff + cam_m[0][2]
             v = cam_m[1][1] * y_ * coeff + cam_m[1][2]
             p_2d[i][0] = u
             p_2d[i][1] = v
 
         return p_2d
-
 
     def load_camera_params(self, path) -> None:
         '''
@@ -49,6 +48,7 @@ class Detector():
                 }
         else:
             print('Error: it is not .npz file')
+
     def instance_method(self, useFlann=True) -> None:
         '''
         Func to instance descriptor and matcher
@@ -83,29 +83,6 @@ class Detector():
         else:
             self.matcher = cv.BFMatcher()
 
-
-    def load_model_params(self, path) -> None:
-        '''
-        This function should load kp and des
-        from file that was created with model.save_to_npz
-        :return: None
-        '''
-        if path.endswith('.npz'):
-            with np.load(path) as file:
-                self.registration_params = {
-                    "img": file['img'],
-                    "height": file['height'],
-                    "width": file['width'],
-                    "kp": file['kp'],
-                    "des": file['des'],
-                    "vol": file['vol'],
-                    "camera_params": file['camera_params'],
-                    "method": file['method']
-                }
-        else:
-            print('Error: it is not .npz file')
-
-
     def get_model_params(self, model: Model) -> None:
         '''
         This function should load kp and des
@@ -124,7 +101,6 @@ class Detector():
         }
         self.camera_params = model.camera_params
 
-
     def detect_video(self, path) -> None:
         '''
         This function should detect object in video and
@@ -142,7 +118,7 @@ class Detector():
             frame = self.detect_image('./videoframes/frame_' + str(ind) + '.png', drawMatch=False)
             if frame is None:
                 break
-            #plt.imshow(frame, 'gray'), plt.show()
+            # plt.imshow(frame, 'gray'), plt.show()
             ind += 1
             out.write(frame)
 
@@ -171,10 +147,11 @@ class Detector():
             h, w = self.registration_params["height"], self.registration_params["width"]
             M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
             matchesMask = mask.ravel().tolist()
-            pts = np.float32([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1], [w - 1, w - 1], [0, w - 1]]).reshape(-1, 1, 2)
+            pts = np.float32([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1], [w - 1, w - 1], [0, w - 1]]).reshape(-1,
+                                                                                                                   1, 2)
             dst = cv.perspectiveTransform(pts, M)
 
-            #imgRes = cv.polylines(img_colored, [np.int32(dst)], True, 255, 3, cv.LINE_AA)
+            # imgRes = cv.polylines(img_colored, [np.int32(dst)], True, 255, 3, cv.LINE_AA)
             imgRes = self._draw_box(img_colored, dst, dst_pts, good, matchesMask)
         else:
             print("Not enough matches are found - {}/{}".format(len(good), self.MIN_MATCH_COUNT))
@@ -191,7 +168,6 @@ class Detector():
 
         return imgRes
 
-
     def _draw_box(self, img, dst, dst_pts, good, matchesMask):
         '''
         This function should draw box of detected
@@ -205,7 +181,8 @@ class Detector():
         mtx, dist = self.camera_params["mtx"], self.camera_params["dist"]
         newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w2, h2), 1, (w2, h2))
         objPoints = np.array([[0., 0., 0.], [w - 1, 0., 0.], [w - 1, w - 1, 0.], [0., w - 1, 0.]])
-        valid, rvec, tvec = cv.solvePnP(objPoints, dst[[True, True, False, False, True, True]], newcameramtx, dist, cv.SOLVEPNP_P3P)
+        valid, rvec, tvec = cv.solvePnP(objPoints, dst[[True, True, False, False, True, True]], newcameramtx, dist,
+                                        cv.SOLVEPNP_P3P)
         # cv.drawFrameAxes(img2, newcameramtx, dist, rvec, tvec, 10000)
         rvecs = cv.Rodrigues(rvec)[0]
         objPoints = np.array(
@@ -263,7 +240,6 @@ class Detector():
             cv.imwrite('./videoframes/frame_' + str(ind) + '.png', frame)
             ind += 1
 
-
     def _lowes_ratio_test(self, matches, coeff=0.7) -> list:
         good = []
         for m, n in matches:
@@ -272,3 +248,37 @@ class Detector():
 
         return good
 
+
+def detect(
+    model_input: str,
+    camera_params: str = None,
+    input_image: str = None,
+    input_video: str = None,
+    use_flann: bool = False,
+    draw_match: bool = False
+):
+    '''
+    Detect features in an image or video.
+
+    Parameters:
+        model_input (str): Path to the saved model file.
+        camera_params (str, optional): Path to the camera parameters file.
+        input_image (str, optional): Path to the input image for detection.
+        input_video (str, optional): Path to the input video for detection.
+        use_flann (bool, optional): Use FLANN-based matching.
+        draw_match (bool, optional): Draw matches on the detected image or video.
+    '''
+    model = Model.load(model_input)
+    detector = Detector()
+    detector.get_model_params(model)
+
+    if camera_params:
+        detector.load_camera_params(camera_params)
+    detector.instance_method(use_flann)
+
+    if input_image:
+        detector.detect_image(input_image, useFlann=use_flann, drawMatch=draw_match)
+    elif input_video:
+        detector.detect_video(input_video)
+    else:
+        print("No input image or video provided for detection.")

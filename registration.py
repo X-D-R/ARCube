@@ -28,7 +28,6 @@ class Model():
         self.camera_params = camera_params
         self.method = method
 
-
     def load_camera_params(self, path) -> None:
         '''
         This function should load params from
@@ -65,7 +64,6 @@ class Model():
         except Exception as e:
             raise ValueError(f"An error occurred while loading the image: {e}")
 
-
     def register(self, feature: str) -> None:
         '''
         This function should register model and
@@ -90,12 +88,10 @@ class Model():
         self.kp, self.des = method.detectAndCompute(self.img, None)
         self.method = feature
 
-
     def get_params(self) -> (list, np.ndarray):
         return self.kp, self.des
 
-
-    def order_points(self,pts):
+    def order_points(self, pts):
         """ Orders points in the format: top-left, top-right, bottom-right, bottom-left """
         rect = np.zeros((4, 2), dtype="float32")
         s = pts.sum(axis=1)
@@ -107,7 +103,6 @@ class Model():
         rect[3] = pts[np.argmax(diff)]  # Bottom-left
 
         return rect
-
 
     def crop_image_by_points(self, points: np.ndarray) -> None:
         '''
@@ -142,7 +137,6 @@ class Model():
         else:
             print("Error: Insufficient points selected!")
 
-
     def click_event(self, event, x, y, flags, param):
         '''
         This function captures four points on the image upon mouse clicks.
@@ -161,7 +155,6 @@ class Model():
             if len(points) == 4:
                 cv.destroyWindow('Select Points')
 
-
     def crop_image_by_clicks(self) -> None:
         '''
         This function should crop image
@@ -169,7 +162,7 @@ class Model():
         :return: None
         '''
         points = []
-        image=self.img.copy()
+        image = self.img.copy()
         h, w = image.shape[:2]
         max_height = 800
         scale = 1.0
@@ -188,7 +181,6 @@ class Model():
         else:
             print("Error: Insufficient points selected!")
 
-
     def _check(self, path_params: str, path_img: str, output_path: str) -> None:
         self.load_camera_params(path_params)
         self.upload_image(path_img, output_path)
@@ -197,19 +189,17 @@ class Model():
             print(f"Feature: {feature}\n\n")
             print(f" KeyPoints: \n {self.kp} \n\n Descriptors: \n{self.des}\n\n")
 
-
     def save_to_npz(self, filename: str) -> None:
         ''' Save model attributes to a .npz file '''
         keypoints = [{'pt': kp.pt, 'size': kp.size, 'angle': kp.angle, 'response': kp.response,
                       'octave': kp.octave, 'class_id': kp.class_id} for kp in self.kp]
         camera_params = {"mtx": self.camera_params["mtx"], "dist": self.camera_params["dist"],
-                          "rvecs": self.camera_params["rvecs"], "tvecs": self.camera_params["tvecs"]}
+                         "rvecs": self.camera_params["rvecs"], "tvecs": self.camera_params["tvecs"]}
 
         np.savez(filename, output_path=self.output_path, height=self.height, width=self.width,
                  kp=keypoints, des=self.des, vol=self.vol, camera_params=camera_params,
                  method=self.method)
 
-        
     @classmethod
     def load(cls, filename: str) -> 'Model':
         ''' Load model attributes from a .npz file and create a Model instance '''
@@ -232,7 +222,7 @@ class Model():
         new_object = cls(
             img=None,
             output_path=str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray)
-                              else data['output_path']),
+                            else data['output_path']),
             height=data['height'].item() if 'height' in data else None,
             width=data['width'].item() if 'width' in data else None,
             kp=keypoints,
@@ -243,8 +233,53 @@ class Model():
         )
         output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray)
                           else data['output_path'])
-        new_object.upload_image(output_path,output_path)
+        new_object.upload_image(output_path, output_path)
         return new_object
 
 
+def register(
+    camera_params: str,
+    input_image: str,
+    output_image: str,
+    crop_method: str,
+    vol: str = '0',
+    points: list[str] = None,
+    feature_method: str = "ORB",
+    model_output: str = "model.npz"
+):
+    '''
+    Register an image by loading camera parameters, cropping the image using the specified method,
+    detecting features, and saving the model to a file.
 
+    Parameters:
+        camera_params (str): Path to camera parameters file.
+        input_image (str): Path to the input image to be registered.
+        vol (str): The volume of the object (needed for 3d rectangle frame).
+        output_image (str): Path where the registered image will be saved.
+        crop_method (str): Cropping method ("clicks", "points", or "none").
+        points (list[str], optional): List of 8 coordinates (x1 y1 x2 y2 x3 y3 x4 y4) for 'points' crop method.
+        feature_method (str, optional): Feature detection method ("ORB", "KAZE", "AKAZE", "BRISK", "SIFT").
+        model_output (str, optional): Path to save the model parameters.
+    '''
+    model = Model()
+    model.load_camera_params(camera_params)
+    model.upload_image(input_image, output_image, int(vol))
+
+    if crop_method == "clicks":
+        model.crop_image_by_clicks()
+    elif crop_method == "points":
+        if points:
+            point_values = [int(coord) for coord in points]
+            if len(point_values) != 8:
+                raise ValueError(
+                    "Exactly 4 points (8 values: x1 y1 x2 y2 x3 y3 x4 y4) are required for 'points' crop method.")
+            points_array = np.array(point_values, dtype=np.int32).reshape(4, 2)
+            model.crop_image_by_points(points_array)
+        else:
+            print("No points provided for 'points' crop method.")
+    elif crop_method == "none":
+        print("Skipping image cropping as per the selected method.")
+
+    model.register(feature_method)
+    model.save_to_npz(model_output)
+    print(f"Model saved to {model_output}")
