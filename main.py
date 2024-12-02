@@ -1,6 +1,6 @@
 import argparse
-from registration import Model, register
 from detection import Detector, detect
+from registration import Model, register
 
 
 def parse_args_and_execute():
@@ -93,6 +93,7 @@ def test_handy_register_detect():
 
 if __name__ == "__main__":
     parse_args_and_execute()
+
     # python main.py register --camera_params "CameraParams/CameraParams.npz" --input_image "old_files/andrew photo video/reference messy.jpg" --output_image "output_script_test.jpg" --crop_method "none" --feature_method "SIFT" --model_output "model_script_test.npz"
     # python main.py detect --model_input "model_script_test.npz" --input_image "old_files/andrew photo video/second pic messy.jpg" --use_flann --draw_match
     # or
