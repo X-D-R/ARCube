@@ -97,3 +97,4 @@ if __name__ == "__main__":
     # python main.py detect --model_input "model_script_test.npz" --input_image "old_files/andrew photo video/second pic messy.jpg" --use_flann --draw_match
     # or
     # test_handy_register_detect()
+

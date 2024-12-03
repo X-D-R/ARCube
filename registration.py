@@ -7,7 +7,7 @@ class Model():
     def __init__(self, img: np.ndarray = None, output_path: str = '', height: int = 0, width: int = 0, kp: list = None,
                  des: np.ndarray = np.empty((0, 0)), vol: int = 0, camera_params: dict = None, method: str = ''):
         '''
-        Attributes:
+        Attribute:
         - img (np.ndarray): The image data
         - output_path (str): The place where the Model img contains
         - height (int): The height of the picture
