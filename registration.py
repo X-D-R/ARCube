@@ -3,22 +3,30 @@ import numpy as np
 
 
 class Model():
+    '''
+    Model class to perform image registration.
+    '''
 
     def __init__(self, img: np.ndarray = None, output_path: str = '', height: int = 0, width: int = 0, kp: list = None,
-                 des: np.ndarray = np.empty((0, 0)), vol: int = 0, camera_params: dict = None, method: str = ''):
+                 des: np.ndarray = np.empty((0, 0)), vol: int = 0, camera_params: dict = None, method: str = '',
+                 points_2d_3d: list = None, object_corners_2d: list = None, object_corners_3d: list = None):
         '''
-        Attributes:
-        - img (np.ndarray): The image data
-        - output_path (str): The place where the Model img contains
-        - height (int): The height of the picture
-        - width (int): The width of the picture
-        - kp (list): Key points detected in the image
-        - des (np.ndarray): Descriptors for the key points
-        - vol (int): The volume of the object (needed for 3d rectangle frame)
-        - camera_params (dict): Dictionary containing camera parameters
-        - method (str): feature detection method to use ("ORB", "KAZE", "AKAZE", "BRISK", "SIFT")
+        Initializes the Model class with the provided parameters.
+
+        :param img: np.ndarray, the image data
+        :param output_path: str, path to save the processed image
+        :param height: int, height of the image
+        :param width: int, width of the image
+        :param kp: list, keypoints detected in the image
+        :param des: np.ndarray, descriptors for the keypoints
+        :param vol: int, volume of the object (if applicable)
+        :param camera_params: dict, camera intrinsic parameters
+        :param method: str, feature detection method used
+        :param points_2d_3d: list, list of 2D-3D key point pairs
+        :param object_corners_2d: list, 2D object corners for registration
+        :param object_corners_3d: list, 3D object corners for registration
         '''
-        self.img: img
+        self.img = img
         self.output_path = output_path
         self.height = height
         self.width = width
@@ -27,32 +35,34 @@ class Model():
         self.vol = vol
         self.camera_params = camera_params
         self.method = method
+        self.points_2d_3d = points_2d_3d if points_2d_3d is not None else []  # Инициализируем как пустой список
+        self.object_corners_2d = object_corners_2d  # Object corners in 2D
+        self.object_corners_3d = object_corners_3d  # Object corners in 3D
 
-    def load_camera_params(self, path) -> None:
+
+    def load_camera_params(self, path: str) -> None:
         '''
-        This function should load params from
-        file to self.camera_params
-        path should be .npz file
+        Loads the camera parameters from a .npz file.
+
+        :param path: str, path to the .npz file containing camera parameters (mtx, dist)
         :return: None
         '''
         if path.endswith('.npz'):
             with np.load(path) as file:
                 self.camera_params = {
-                    "mtx": file['cameraMatrix'],
-                    "dist": file['dist'],
-                    "rvecs": file['rvecs'],
-                    "tvecs": file['tvecs']
+                    "mtx": file['mtx'],
+                    "dist": file['dist']
                 }
         else:
             print('Error: it is not .npz file')
 
     def upload_image(self, input_path: str, output_path: str, vol: int = 0) -> None:
         '''
-        This func should upload image using cv
-        from given path and save to self.img
-        :param input_path: str, to upload photo
-        :param output_path: str, to place where the Model img contains
-        :param vol: int, the volume of the object (needed for 3d rectangle frame)
+        Loads the image of the object.
+
+        :param input_path: str, path to the image file
+        :param output_path: str, path to save the processed image
+        :param vol: int, the volume of the object
         :return: None
         '''
         try:
@@ -66,9 +76,9 @@ class Model():
 
     def register(self, feature: str) -> None:
         '''
-        This function should register model and
-        write keypoints and descriptors in self.kp and self.des
-        :param feature: Feature detection method to use ("ORB", "KAZE", "AKAZE", "BRISK", "SIFT")
+        Detects keypoints and computes descriptors using the specified feature detection method.
+
+        :param feature: str, the feature detection method to use ("ORB", "KAZE", "AKAZE", "BRISK", "SIFT")
         :return: None
         '''
         assert self.img is not None, 'Image should be loaded first'
@@ -88,121 +98,147 @@ class Model():
         self.kp, self.des = method.detectAndCompute(self.img, None)
         self.method = feature
 
-    def get_params(self) -> (list, np.ndarray):
+    def get_params(self) -> tuple[list, np.ndarray]:
         return self.kp, self.des
 
-    def order_points(self, pts):
-        """ Orders points in the format: top-left, top-right, bottom-right, bottom-left """
-        rect = np.zeros((4, 2), dtype="float32")
-        s = pts.sum(axis=1)
-        rect[0] = pts[np.argmin(s)]  # Top-left
-        rect[2] = pts[np.argmax(s)]  # Bottom-right
-
-        diff = np.diff(pts, axis=1)
-        rect[1] = pts[np.argmin(diff)]  # Top-right
-        rect[3] = pts[np.argmax(diff)]  # Bottom-left
-
-        return rect
-
-    def crop_image_by_points(self, points: np.ndarray) -> None:
+    def register_point(self, point_2d: list, point_3d: list) -> None:
         '''
-        This function should crop image
-        by given points
-        :param points: np.ndarray of shape (4, 2)
+        Registers a single 2D-3D point pair.
+
+        :param point_2d: list, 2D coordinates of the point
+        :param point_3d: list, 3D coordinates of the point
         :return: None
         '''
-        if len(points) == 4:
-            rect = self.order_points(points)
+        self.points_2d_3d.append({'2d': point_2d, '3d': point_3d})
+        print(f"Registered 2D point {point_2d} with 3D point {point_3d}")
 
-            width_a = np.linalg.norm(rect[0] - rect[1])
-            width_b = np.linalg.norm(rect[2] - rect[3])
-            max_width = int(max(width_a, width_b))
+    def select_object_corners(self, crop_method: str) -> None:
+        '''
+        Allows the user to select the object corners interactively based on the crop method.
 
-            height_a = np.linalg.norm(rect[1] - rect[2])
-            height_b = np.linalg.norm(rect[3] - rect[0])
-            max_height = int(max(height_a, height_b))
+        :param crop_method: str, the method for selecting corners ("photo" or "corner")
+        :return: None
+        '''
+        points_2d = []
+        h = self.height
+        w = self.width
+        if crop_method == 'photo':
+            max_height = 800
+            scale = 1.0
+            image = self.img
+            if h > max_height:
+                scale = max_height / h
+                image = cv.resize(image, (int(w * scale), int(h * scale)))
 
-            dst = np.array([
-                [0, 0],
-                [max_width - 1, 0],
-                [max_width - 1, max_height - 1],
-                [0, max_height - 1]
-            ], dtype="float32")
+            def click_event(event, x, y, flags, param):
+                if event == cv.EVENT_LBUTTONDOWN and len(points_2d) < 7:
+                    points_2d.append([x, y])
+                    cv.circle(image, (x, y), 5, (0, 255, 0), -1)
+                    cv.imshow("Select Corners", image)
+                    print(f"Selected corner: ({x}, {y})")
 
-            matrix = cv.getPerspectiveTransform(rect, dst)
-            warped = cv.warpPerspective(self.img, matrix, (max_width, max_height))
-            self.img = warped
-            self.height, self.width = self.img.shape
-            cv.imwrite(self.output_path, self.img)
+            instructions = f"Mark object corners (from 4 to 7 points):"
+            print(instructions)
+            cv.imshow("Select Corners", image)
+            cv.setMouseCallback("Select Corners", click_event)
+            cv.waitKey(0)
+            cv.destroyAllWindows()
+
+            if len(points_2d) < 4:
+                raise ValueError("At least 4 points are required to define the object.")
+        elif crop_method == 'corner':
+            points_2d.extend([[0, 0], [w, 0], [w, h], [0, h]])
         else:
-            print("Error: Insufficient points selected!")
+            raise ValueError("You chose wrong crop method, use 'photo' or 'corner' ")
+        self.object_corners_2d = np.array(points_2d, dtype="float32")
+        print(f"Selected corners: {self.object_corners_2d}")
 
-    def click_event(self, event, x, y, flags, param):
+    def compute_plane(self, points_3d: list[np.ndarray]) -> tuple:
         '''
-        This function captures four points on the image upon mouse clicks.
-        :param event: Mouse event, like left button click
-        :param x: X-coordinate of the click
-        :param y: Y-coordinate of the click
-        :param param: Tuple containing the display image and the points list(np.ndarray)
+        Computes the plane equation Ax + By + Cz + D = 0 using 3D points.
+
+        :param points_3d: list, 3D points used to compute the plane
+        :return: tuple, coefficients (A, B, C, D) of the plane equation
+        '''
+        p1, p2, p3 = points_3d[0], points_3d[1], points_3d[-1]
+        v1 = p2 - p1
+        v2 = p3 - p1
+        normal = np.cross(v1, v2)
+        A, B, C = normal
+        D = -np.dot(normal, p1)
+        return A, B, C, D
+
+    def map_keypoints_to_3d_plane(self, object_corners_3d: np.ndarray) -> None:
+        '''
+        Maps 2D keypoints to 3D coordinates using the plane equation.
+
+        :param object_corners_3d: np.ndarray, 3D coordinates of the object corners
         :return: None
         '''
-        image, points = param
-        if event == cv.EVENT_LBUTTONDOWN:
-            points.append([x, y])
-            cv.circle(image, (x, y), 5, (0, 0, 255), -1)
-            cv.imshow('Select Points', image)
+        assert self.object_corners_2d is not None, "2D corners must be defined."
+        assert len(self.object_corners_2d) == len(object_corners_3d), \
+            "Number of 2D and 3D corners must match."
 
-            if len(points) == 4:
-                cv.destroyWindow('Select Points')
+        # Step 1: Compute the plane equation from the 3D object corners
+        A, B, C, D = self.compute_plane(object_corners_3d)
 
-    def crop_image_by_clicks(self) -> None:
+        # Step 2: Use the plane equation to find the 3D coordinates of the 2D keypoints
+        for kp in self.kp:
+            # 2D keypoint coordinates
+            point_2d = np.array([kp.pt[0], kp.pt[1]])
+
+            # Apply the plane equation to find z
+            x, y = point_2d
+            z = -(A * x + B * y + D) / C  # Solve for z using the plane equation
+
+            # Register the 2D-3D point pair
+            self.register_point([x, y], [x, y, z])
+
+    def map_keypoints_to_3d_homography(self, object_corners_3d: np.ndarray) -> None:
         '''
-        This function should crop image
-        by points that you choose on picture
+        Maps 2D keypoints to 3D coordinates using homography.
+
+        :param object_corners_3d: np.ndarray, 3D coordinates of the object corners
         :return: None
         '''
-        points = []
-        image = self.img.copy()
-        h, w = image.shape[:2]
-        max_height = 800
-        scale = 1.0
-        if h > max_height:
-            scale = max_height / h
-            image = cv.resize(image, (int(w * scale), int(h * scale)))
+        assert self.object_corners_2d is not None, "2D corners must be defined."
+        assert len(self.object_corners_2d) == len(object_corners_3d), \
+            "Number of 2D and 3D corners must match."
 
-        display_image = image.copy()
-        cv.imshow('Select Points', display_image)
-        cv.setMouseCallback('Select Points', self.click_event, param=(display_image, points))
-        cv.waitKey(0)
+        self.object_corners_3d = object_corners_3d
+        h_matrix, _ = cv.findHomography(self.object_corners_2d, object_corners_3d[:, :2])
 
-        if len(points) == 4:
-            points = np.array([[int(x / scale), int(y / scale)] for [x, y] in points], dtype="float32")
-            self.crop_image_by_points(points)
-        else:
-            print("Error: Insufficient points selected!")
-
-    def _check(self, path_params: str, path_img: str, output_path: str) -> None:
-        self.load_camera_params(path_params)
-        self.upload_image(path_img, output_path)
-        for feature in ["ORB", "KAZE", "AKAZE", "BRISK", "SIFT"]:
-            self.register(feature)
-            print(f"Feature: {feature}\n\n")
-            print(f" KeyPoints: \n {self.kp} \n\n Descriptors: \n{self.des}\n\n")
+        for kp in self.kp:
+            point_2d = np.array([kp.pt[0], kp.pt[1], 1.0])
+            point_3d_homo = h_matrix @ point_2d
+            point_3d = point_3d_homo[:2] / point_3d_homo[2]
+            z = self.object_corners_3d[0, 2]
+            self.register_point(kp.pt, [point_3d[0], point_3d[1], z])
 
     def save_to_npz(self, filename: str) -> None:
-        ''' Save model attributes to a .npz file '''
+        '''
+        Saves the model's attributes to a .npz file.
+
+        :param filename: str, path to save the .npz file
+        :return: None
+        '''
         keypoints = [{'pt': kp.pt, 'size': kp.size, 'angle': kp.angle, 'response': kp.response,
                       'octave': kp.octave, 'class_id': kp.class_id} for kp in self.kp]
-        camera_params = {"mtx": self.camera_params["mtx"], "dist": self.camera_params["dist"],
-                         "rvecs": self.camera_params["rvecs"], "tvecs": self.camera_params["tvecs"]}
+        camera_params = {"mtx": self.camera_params["mtx"], "dist": self.camera_params["dist"]}
 
         np.savez(filename, output_path=self.output_path, height=self.height, width=self.width,
                  kp=keypoints, des=self.des, vol=self.vol, camera_params=camera_params,
-                 method=self.method)
+                 method=self.method, points_2d_3d=self.points_2d_3d,
+                 object_corners_2d=self.object_corners_2d, object_corners_3d=self.object_corners_3d)
 
     @classmethod
     def load(cls, filename: str) -> 'Model':
-        ''' Load model attributes from a .npz file and create a Model instance '''
+        '''
+        Loads a model from a .npz file.
+
+        :param filename: str, path to the .npz file
+        :return: Model, an instance of the Model class
+        '''
         data = np.load(filename, allow_pickle=True)
 
         if 'output_path' not in data:
@@ -215,9 +251,7 @@ class Model():
         camera_params = data['camera_params'].item()
         mtx = camera_params.get('mtx', None)
         dist = camera_params.get('dist', None)
-        rvecs = camera_params.get('rvecs', None)
-        tvecs = camera_params.get('tvecs', None)
-        camera_params_dict = {"mtx": mtx, "dist": dist, "rvecs": rvecs, "tvecs": tvecs}
+        camera_params_dict = {"mtx": mtx, "dist": dist}
 
         new_object = cls(
             img=None,
@@ -229,57 +263,73 @@ class Model():
             des=data['des'] if 'des' in data else None,
             vol=data['vol'] if 'vol' in data else None,
             camera_params=camera_params_dict,
-            method=data['method'] if 'method' in data else None
+            method=data['method'] if 'method' in data else None,
+            points_2d_3d=data['points_2d_3d'],
+            object_corners_2d=data['object_corners_2d'],
+            object_corners_3d=data['object_corners_3d']
         )
         output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray)
                           else data['output_path'])
         new_object.upload_image(output_path, output_path)
         return new_object
 
+    def register_with_object_corners(self, feature_method: str, object_corners_3d: np.ndarray,
+                                     crop_method: str = 'photo') -> None:
+        '''
+        Performs registration, including interactive corner selection.
 
-def register(
-    camera_params: str,
-    input_image: str,
-    output_image: str,
-    crop_method: str,
-    vol: str = '0',
-    points: list[str] = None,
-    feature_method: str = "ORB",
-    model_output: str = "model.npz"
-):
+        :param feature_method: str, the feature detection method to use (e.g., "ORB", "SIFT")
+        :param object_corners_3d: np.ndarray, the 3D coordinates of the object corners
+        :param crop_method: str, the method used for cropping ("photo" or "corner")
+        :return: None
+        '''
+        self.select_object_corners(crop_method)
+        self.register(feature_method)
+        self.map_keypoints_to_3d_plane(object_corners_3d)
+        print("Registration completed with object corners.")
+
+
+def register(camera_params: str, input_image: str, output_image: str, vol: int,
+             object_corners_3d: np.ndarray, crop_method: str, feature_method: str, model_output: str) -> None:
+
     '''
-    Register an image by loading camera parameters, cropping the image using the specified method,
-    detecting features, and saving the model to a file.
+    Main registration function.
 
-    Parameters:
-        camera_params (str): Path to camera parameters file.
-        input_image (str): Path to the input image to be registered.
-        vol (str): The volume of the object (needed for 3d rectangle frame).
-        output_image (str): Path where the registered image will be saved.
-        crop_method (str): Cropping method ("clicks", "points", or "none").
-        points (list[str], optional): List of 8 coordinates (x1 y1 x2 y2 x3 y3 x4 y4) for 'points' crop method.
-        feature_method (str, optional): Feature detection method ("ORB", "KAZE", "AKAZE", "BRISK", "SIFT").
-        model_output (str, optional): Path to save the model parameters.
+    :param camera_params: str, path to the camera parameters .npz file
+    :param input_image: str, path to the input image
+    :param output_image: str, path to save the output image
+    :param vol: int, volume of the object
+    :param object_corners_3d: np.ndarray, the 3D coordinates of the object corners
+    :param crop_method: str, the method used for cropping ("photo" or "corner")
+    :param feature_method: str, the feature detection method to use (e.g., "ORB")
+    :param model_output: str, path to save the model output .npz file
+    :return: None
     '''
     model = Model()
     model.load_camera_params(camera_params)
-    model.upload_image(input_image, output_image, int(vol))
-
-    if crop_method == "clicks":
-        model.crop_image_by_clicks()
-    elif crop_method == "points":
-        if points:
-            point_values = [int(coord) for coord in points]
-            if len(point_values) != 8:
-                raise ValueError(
-                    "Exactly 4 points (8 values: x1 y1 x2 y2 x3 y3 x4 y4) are required for 'points' crop method.")
-            points_array = np.array(point_values, dtype=np.int32).reshape(4, 2)
-            model.crop_image_by_points(points_array)
-        else:
-            print("No points provided for 'points' crop method.")
-    elif crop_method == "none":
-        print("Skipping image cropping as per the selected method.")
-
-    model.register(feature_method)
+    model.upload_image(input_image, output_image, vol)
+    model.register_with_object_corners(feature_method, object_corners_3d, crop_method)
     model.save_to_npz(model_output)
     print(f"Model saved to {model_output}")
+
+''' 
+# example
+object_corners_3d = np.array([
+    [0, 0, 0],  # Top-left
+    [13, 0, 0],  # Top-right
+    [13, 20.5, 0],  # Bottom-right
+    [0, 20.5, 0],  # Bottom-left
+    # Optionally, add more points if needed
+], dtype="float32")
+
+register(
+    camera_params="CameraParams/cam_params_andrew.npz",
+    input_image="old_files/andrew photo video/reference messy.jpg",
+    output_image="output_script_test.jpg",
+    vol=0,
+    object_corners_3d=object_corners_3d,
+    crop_method='corner',
+    feature_method="ORB",
+    model_output="model_script_test.npz"
+)
+'''
