@@ -1,4 +1,5 @@
 import cv2 as cv
+import os
 import numpy as np
 from Draw_functions import draw_tracks
 
@@ -33,9 +34,47 @@ class KLT_Tracker:
         return good_new_points, good_old_points
 
 
+folder_path = "hotel_images"
+output_video_path = "output_video_test_klt2.mp4"
+
+image_files = sorted([f for f in os.listdir(folder_path) if f.endswith('.png')])
+
+if not image_files:
+    print("В указанной папке нет изображений!")
+    exit()
+
+first_image_path = os.path.join(folder_path, image_files[0])
+first_image = cv.imread(first_image_path)
+
+if first_image is None:
+    print(f"Не удалось загрузить изображение: {image_files[0]}")
+    exit()
+
+height, width, channels = first_image.shape
+
+fps = 30
+fourcc = cv.VideoWriter_fourcc(*"mp4v")
+video_writer = cv.VideoWriter(output_video_path, fourcc, fps, (width, height))
+
+for image_file in reversed(image_files):
+    image_path = os.path.join(folder_path, image_file)
+    image = cv.imread(image_path)
+
+    if image is None:
+        print(f"Пропускаем файл: {image_file} (не удалось загрузить)")
+        continue
+
+    resized_image = cv.resize(image, (width, height))  # Убедимся, что размер соответствует
+    video_writer.write(resized_image)
+
+# Освобождаем ресурсы
+video_writer.release()
+print(f"Видео успешно создано: {output_video_path}")
+
+
 # Example usage
 if __name__ == "__main__":
-    cap = cv.VideoCapture('your_video.mp4')
+    cap = cv.VideoCapture(output_video_path)
     klt_tracker = KLT_Tracker()
 
     ret, frame = cap.read()
@@ -70,7 +109,7 @@ if __name__ == "__main__":
 
     height, width, channels = imgSize
     fourcc = cv.VideoWriter_fourcc(*'mp4v')
-    video = cv.VideoWriter('result.mp4', fourcc, 30, (width, height))
+    video = cv.VideoWriter('result2.mp4', fourcc, 30, (width, height))
 
     for i in range(len(Images)):
         video.write(Images[i])
