@@ -111,7 +111,7 @@ class frame_by_registration:
     def draw_frame(self, frame, sift_3d, p_feat, cameraMatrix, distCoeffs, model):
         #h, w = img1.shape
         #pts = np.float32([[0, 0, 0], [0, h - 1, 0], [w - 1, h - 1, 0], [w - 1, 0, 0]])
-        pts = model.corners
+        pts = pts = model.object_corners_2d
         if len(p_feat) > 3 and len(p_feat) == len(sift_3d):
             valid, rvec, tvec = cv.solvePnP(sift_3d, p_feat, cameraMatrix, distCoeffs)
             rvecs = cv.Rodrigues(rvec)[0]
