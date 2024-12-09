@@ -153,13 +153,13 @@ class Model():
         self.object_corners_2d = np.array(points_2d, dtype="float32")
         print(f"Selected corners: {self.object_corners_2d}")
 
-    def compute_plane(self, points_3d: list[np.ndarray]) -> tuple:
+    def compute_plane(self) -> tuple:
         '''
         Computes the plane equation Ax + By + Cz + D = 0 using 3D points.
 
-        :param points_3d: list, 3D points used to compute the plane
         :return: tuple, coefficients (A, B, C, D) of the plane equation
         '''
+        points_3d = self.object_corners_3d
         p1, p2, p3 = points_3d[0], points_3d[1], points_3d[-1]
         v1 = p2 - p1
         v2 = p3 - p1
@@ -168,52 +168,32 @@ class Model():
         D = -np.dot(normal, p1)
         return A, B, C, D
 
-    def map_keypoints_to_3d_plane(self, object_corners_3d: np.ndarray) -> None:
+    def map_keypoints_to_3d_plane(self) -> None:
         '''
         Maps 2D keypoints to 3D coordinates using the plane equation.
 
-        :param object_corners_3d: np.ndarray, 3D coordinates of the object corners
         :return: None
         '''
         assert self.object_corners_2d is not None, "2D corners must be defined."
-        assert len(self.object_corners_2d) == len(object_corners_3d), \
+        assert len(self.object_corners_2d) == len(self.object_corners_3d), \
             "Number of 2D and 3D corners must match."
 
-        # Step 1: Compute the plane equation from the 3D object corners
-        A, B, C, D = self.compute_plane(object_corners_3d)
+        bounds_2d = self.object_corners_2d.max(axis=0) - self.object_corners_2d.min(axis=0)
+        bounds_3d = self.object_corners_3d.max(axis=0) - self.object_corners_3d.min(axis=0)
+        scale_x = bounds_3d[0] / bounds_2d[0]
+        scale_y = bounds_3d[1] / bounds_2d[1]
 
-        # Step 2: Use the plane equation to find the 3D coordinates of the 2D keypoints
+        A, B, C, D = self.compute_plane()
+
         for kp in self.kp:
-            # 2D keypoint coordinates
             point_2d = np.array([kp.pt[0], kp.pt[1]])
 
-            # Apply the plane equation to find z
-            x, y = point_2d
-            z = -(A * x + B * y + D) / C  # Solve for z using the plane equation
+            x = (point_2d[0] - self.object_corners_2d.min(axis=0)[0]) * scale_x
+            y = (point_2d[1] - self.object_corners_2d.min(axis=0)[1]) * scale_y
+            z = -(A * x + B * y + D) / C
 
-            # Register the 2D-3D point pair
-            self.register_point([x, y], [x, y, z])
+            self.register_point([point_2d[0], point_2d[1]], [x, y, z])
 
-    def map_keypoints_to_3d_homography(self, object_corners_3d: np.ndarray) -> None:
-        '''
-        Maps 2D keypoints to 3D coordinates using homography.
-
-        :param object_corners_3d: np.ndarray, 3D coordinates of the object corners
-        :return: None
-        '''
-        assert self.object_corners_2d is not None, "2D corners must be defined."
-        assert len(self.object_corners_2d) == len(object_corners_3d), \
-            "Number of 2D and 3D corners must match."
-
-        self.object_corners_3d = object_corners_3d
-        h_matrix, _ = cv.findHomography(self.object_corners_2d, object_corners_3d[:, :2])
-
-        for kp in self.kp:
-            point_2d = np.array([kp.pt[0], kp.pt[1], 1.0])
-            point_3d_homo = h_matrix @ point_2d
-            point_3d = point_3d_homo[:2] / point_3d_homo[2]
-            z = self.object_corners_3d[0, 2]
-            self.register_point(kp.pt, [point_3d[0], point_3d[1], z])
 
     def save_to_npz(self, filename: str) -> None:
         '''
@@ -284,8 +264,9 @@ class Model():
         :return: None
         '''
         self.select_object_corners(crop_method)
+        self.object_corners_3d = object_corners_3d
         self.register(feature_method)
-        self.map_keypoints_to_3d_plane(object_corners_3d)
+        self.map_keypoints_to_3d_plane()
         print("Registration completed with object corners.")
 
 
@@ -312,7 +293,7 @@ def register(camera_params: str, input_image: str, output_image: str, vol: int,
     model.save_to_npz(model_output)
     print(f"Model saved to {model_output}")
 
-''' 
+'''
 # example
 object_corners_3d = np.array([
     [0, 0, 0],  # Top-left
