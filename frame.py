@@ -1,7 +1,7 @@
 
 import cv2 as cv
 import numpy as np
-from registration_1 import Model, register
+from registration import Model, register
 from detection import Detector
 
 
