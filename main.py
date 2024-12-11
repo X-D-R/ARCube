@@ -4,6 +4,7 @@ from detection import Detector, detect
 from registration import Model, register
 
 
+
 def parse_args_and_execute():
     '''Parse command-line arguments and execute the appropriate function (register or detect).'''
 
@@ -129,3 +130,5 @@ if __name__ == "__main__":
     # python main.py detect --model_input "model_script_test.npz" --input_image "old_files/andrew photo video/second pic messy.jpg" --use_flann --draw_match
     # or
     # test_handy_register_detect()
+
+
