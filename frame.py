@@ -10,7 +10,6 @@ from detection import Detector
 
 
 
-
 def detect_features(shot, model, h, w, img1):  #detecting features, matching features
         MIN_MATCH_COUNT = 10
         sift = cv.SIFT_create()
