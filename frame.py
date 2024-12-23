@@ -74,8 +74,6 @@ def registration_transform_3d_corners(rvecs, tvec, cameraMatrix, distCoeffs): #t
     return t
 
 
-
-
 class frame_by_registration:
     def __init__(self, max_corners=100, quality_level=0.3, min_distance=7, block_size=7):
         self.max_corners = max_corners
