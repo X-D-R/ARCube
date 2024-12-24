@@ -1,18 +1,15 @@
 import cv2 as cv
 import numpy as np
 
+
 class RegistrationUI():
-
-    def __init__(self, img: np.ndarray = None, height: int = 0, width: int = 0, object_corners_2d: list = None,
-                 object_corners_3d: list = None):
+    def __init__(self, img: np.ndarray = None, object_corners_2d: list = None, object_corners_3d: list = None):
         '''
-        Initializes the RegistrationUI class with the provided parameters.
+        Initializes the RegistrationUI class with optional parameters.
 
-        :param img: np.ndarray, the image data
-        :param height: int, height of the image
-        :param width: int, width of the image
-        :param object_corners_2d: list, 2D object corners for registration
-        :param object_corners_3d: list, 3D object corners for registration
+        :param img: np.ndarray, grayscale image of the object (default: None)
+        :param object_corners_2d: list, 2D object corners for registration (default: None)
+        :param object_corners_3d: list, 3D object corners for registration (default: None)
         '''
         self.img = img
         self.object_corners_2d = object_corners_2d
@@ -20,9 +17,9 @@ class RegistrationUI():
 
     def upload_image(self, input_path: str) -> None:
         '''
-        Loads the image of the object.
+        Loads a grayscale image from the specified file path.
 
-        :param input_path: str, path to the image file
+        :param input_path: str, path to the input image file
         :return: None
         '''
         try:
@@ -30,13 +27,25 @@ class RegistrationUI():
         except Exception as e:
             raise ValueError(f"An error occurred while loading the image: {e}")
 
+    def insert_object_corners_3d(self, object_corners_3d: np.ndarray) -> None:
+        '''
+        Sets the 3D object corners.
+
+        :param object_corners_3d: np.ndarray, 3D coordinates of the object corners
+        :return: None
+        '''
+        self.object_corners_3d = object_corners_3d
+
     def select_object_corners(self, crop_method: str) -> None:
         '''
-        Allows the user to select the object corners interactively based on the crop method.
+        Allows the user to select 2D object corners interactively or automatically.
 
         :param crop_method: str, the method for selecting corners ("photo" or "corner")
         :return: None
         '''
+        if self.img is None:
+            raise ValueError("Image must be loaded before selecting corners.")
+
         points_2d = []
         h, w = self.img.shape
         if crop_method == 'photo':
@@ -54,8 +63,7 @@ class RegistrationUI():
                     cv.imshow("Select Corners", image)
                     print(f"Selected corner: ({x}, {y})")
 
-            instructions = f"Mark object corners (from 4 to 7 points):"
-            print(instructions)
+            print("Mark object corners (from 4 to 7 points):")
             cv.imshow("Select Corners", image)
             cv.setMouseCallback("Select Corners", click_event)
             cv.waitKey(0)
@@ -85,4 +93,19 @@ class RegistrationUI():
         ]
         return corners_2d_3d
 
+    def register_object_corners(self, img_path: str, object_corners_3d: np.ndarray, crop_method: str) -> list:
+        '''
+        Performs the full process of registering object corners, including loading the image,
+        setting 3D corners, and selecting 2D corners interactively or automatically.
 
+        :param img_path: str, path to the input image
+        :param object_corners_3d: np.ndarray, 3D coordinates of the object corners
+        :param crop_method: str, method for selecting 2D corners ("photo" or "corner")
+        :return: list of dictionaries, each containing a 2D-3D corner pair
+        '''
+        self.upload_image(img_path)
+        self.insert_object_corners_3d(object_corners_3d)
+        self.select_object_corners(crop_method)
+        corners_2d_3d = self.get_2d_3d_corners()
+        print("Registration object corners completed!")
+        return corners_2d_3d

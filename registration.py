@@ -3,31 +3,26 @@ import numpy as np
 
 
 class Registration():
-    '''
-    Registration class to perform image registration.
-    '''
-
-    def __init__(self, img: np.ndarray = None,  kp: list = None, des: np.ndarray = np.empty((0, 0)), method: str = '',
-                 points_2d_3d: list = None, object_corners_2d: list = None, object_corners_3d: list = None):
+    def __init__(self, img: np.ndarray = None, kp: list = None, des: np.ndarray = np.empty((0, 0)), method: str = '',
+                 points_2d_3d_des: list = None, object_corners_2d: list = None, object_corners_3d: list = None):
         '''
-        Initializes the Model class with the provided parameters.
+        Initializes the Registration class with the provided parameters.
 
-        :param img: np.ndarray, the image data
-        :param kp: list, keypoints detected in the image
-        :param des: np.ndarray, descriptors for the keypoints
-        :param method: str, feature detection method used
-        :param points_2d_3d: list, list of 2D-3D key point pairs
-        :param object_corners_2d: list, 2D object corners for registration
-        :param object_corners_3d: list, 3D object corners for registration
+        :param img: np.ndarray, grayscale image of the object
+        :param kp: list, detected keypoints
+        :param des: np.ndarray, descriptors corresponding to the keypoints
+        :param method: str, feature detection method used (e.g., "ORB", "SIFT")
+        :param points_2d_3d_des: list, list of dictionaries containing 2D-3D keypoint pairs and their descriptors
+        :param object_corners_2d: list, 2D coordinates of the object's corners
+        :param object_corners_3d: list, 3D coordinates of the object's corners
         '''
         self.img = img
         self.kp = kp
         self.des = des
         self.method = method
-        self.points_2d_3d = points_2d_3d if points_2d_3d is not None else []
+        self.points_2d_3d_des = points_2d_3d_des if points_2d_3d_des is not None else []
         self.object_corners_2d = object_corners_2d
         self.object_corners_3d = object_corners_3d
-
 
     def upload_image(self, input_path: str) -> None:
         '''
@@ -38,10 +33,12 @@ class Registration():
         '''
         try:
             self.img = cv.imread(input_path, cv.IMREAD_GRAYSCALE)
+            if self.img is None:
+                raise ValueError("Failed to load the image. Check the file path.")
         except Exception as e:
             raise ValueError(f"An error occurred while loading the image: {e}")
 
-    def register(self, feature: str) -> None:
+    def find_kp(self, feature: str) -> None:
         '''
         Detects keypoints and computes descriptors using the specified feature detection method.
         Filters keypoints and descriptors to include only those inside the defined object area.
@@ -83,24 +80,25 @@ class Registration():
 
     def split_2d_3d_corners(self, corners_2d_3d: list) -> None:
         '''
-        Splits a combined 2D-3D corners list into separate 2D and 3D arrays.
+        Splits a combined list of 2D-3D corner pairs into separate 2D and 3D corner arrays.
 
-        :param corners_2d_3d: list of dictionaries where each dictionary contains a 2D-3D pair
+        :param corners_2d_3d: list, list of dictionaries containing 2D and 3D corners
         :return: None
         '''
         self.object_corners_2d = np.array([corner['2d'] for corner in corners_2d_3d], dtype="float32")
         self.object_corners_3d = np.array([corner['3d'] for corner in corners_2d_3d], dtype="float32")
 
-    def register_point(self, point_2d: list, point_3d: list) -> None:
+    def register_point(self, point_2d: list, point_3d: list, des) -> None:
         '''
         Registers a single 2D-3D point pair.
 
         :param point_2d: list, 2D coordinates of the point
         :param point_3d: list, 3D coordinates of the point
+        :param des: description of the point
         :return: None
         '''
-        self.points_2d_3d.append({'2d': point_2d, '3d': point_3d})
-        print(f"Registered 2D point {point_2d} with 3D point {point_3d}")
+        self.points_2d_3d_des.append({'2d': point_2d, '3d': point_3d, 'des': des})
+        print(f"Registered 2D point {point_2d} with 3D point {point_3d} with description {des}")
 
     def compute_plane(self) -> tuple:
         '''
@@ -123,6 +121,8 @@ class Registration():
 
         :return: None
         '''
+        if self.des is None or len(self.kp) != len(self.des):
+            raise ValueError("Keypoints and descriptors must match.")
         assert self.object_corners_2d is not None, "2D corners must be defined."
         assert len(self.object_corners_2d) == len(self.object_corners_3d), \
             "Number of 2D and 3D corners must match."
@@ -134,6 +134,7 @@ class Registration():
 
         A, B, C, D = self.compute_plane()
 
+        i = 0
         for kp in self.kp:
             point_2d = np.array([kp.pt[0], kp.pt[1]])
 
@@ -141,61 +142,25 @@ class Registration():
             y = (point_2d[1] - self.object_corners_2d.min(axis=0)[1]) * scale_y
             z = -(A * x + B * y + D) / C
 
-            self.register_point([point_2d[0], point_2d[1]], [x, y, z])
+            self.register_point([point_2d[0], point_2d[1]], [x, y, z], self.des[i])
+            i += 1
 
-    def register_with_object_corners(self, feature_method: str, corners_2d_3d: list) -> None:
+    def get_2d_3d_kp_des(self):
+        return self.points_2d_3d_des
+
+    def register_with_object_corners(self, img_path: str, feature_method: str, corners_2d_3d: list) -> list:
         '''
         Performs registration, including interactive corner selection.
 
+        :param img_path: str, path to the image
         :param feature_method: str, the feature detection method to use (e.g., "ORB", "SIFT")
-        :param object_corners_3d: np.ndarray, the 3D coordinates of the object corners
+        :param corners_2d_3d: np.ndarray, the 3D coordinates of the object corners
         :return: None
         '''
+        self.upload_image(img_path)
         self.split_2d_3d_corners(corners_2d_3d)
-        self.register(feature_method)
+        self.find_kp(feature_method)
         self.map_keypoints_to_3d_plane()
-        print("Registration completed with object corners.")
-
-
-def register(input_image: str, corners_2d_3d: list, feature_method: str, model_output: str) -> None:
-
-    '''
-    Main registration function.
-
-    :param camera_params: str, path to the camera parameters .npz file
-    :param input_image: str, path to the input image
-    :param output_image: str, path to save the output image
-    :param vol: int, volume of the object
-    :param object_corners_3d: np.ndarray, the 3D coordinates of the object corners
-    :param crop_method: str, the method used for cropping ("photo" or "corner")
-    :param feature_method: str, the feature detection method to use (e.g., "ORB")
-    :param model_output: str, path to save the model output .npz file
-    :return: None
-    '''
-    model = Registration()
-    model.upload_image(input_image)
-    model.register_with_object_corners(feature_method, corners_2d_3d)
-    model.save_to_npz(model_output)
-    print(f"Model saved to {model_output}")
-
-
-# example
-object_corners_3d = np.array([
-    [0, 0, 0],  # Top-left
-    [13, 0, 0],  # Top-right
-    [13, 20.5, 0],  # Bottom-right
-    [0, 20.5, 0],  # Bottom-left
-    # Optionally, add more points if needed
-], dtype="float32")
-
-register(
-    camera_params="CameraParams/cam_params_andrew.npz",
-    input_image="old_files/andrew photo video/reference messy.jpg",
-    output_image="output_script_test.jpg",
-    vol=0,
-    object_corners_3d=object_corners_3d,
-    crop_method='corner',
-    feature_method="ORB",
-    model_output="model_script_test.npz"
-)
-
+        print("Registration object key points completed")
+        points_2d_3d_des = self.get_2d_3d_kp_des()
+        return points_2d_3d_des
