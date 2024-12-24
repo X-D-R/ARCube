@@ -1,9 +1,9 @@
 import cv2 as cv
 import numpy as np
-from Draw_functions import draw_tracks
+from draw_functions import draw_tracks
 
 class KLT_Tracker:
-    def __init__(self, max_corners=100, quality_level=0.3, min_distance=7, block_size=7):
+    def __init__(self, max_corners=300, quality_level=0.1, min_distance=7, block_size=4):
         self.max_corners = max_corners
         self.quality_level = quality_level
         self.min_distance = min_distance
@@ -30,7 +30,7 @@ class KLT_Tracker:
         good_new_points = new_points[status == 1]
         good_old_points = points[status == 1]
 
-        return good_new_points, good_old_points
+        return good_new_points, good_old_points, status
 
 
 # Example usage
@@ -58,7 +58,7 @@ if __name__ == "__main__":
             points = klt_tracker.get_points_to_track(frame)
             mask = np.zeros_like(frame)
 
-        good_new_points, good_old_points = klt_tracker.track(frame, current_frame, points)
+        good_new_points, good_old_points, status = klt_tracker.track(frame, current_frame, points)
         mask, current_frame = draw_tracks(mask, current_frame, good_new_points, good_old_points)
 
         img = cv.add(current_frame, mask)
