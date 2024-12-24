@@ -293,7 +293,7 @@ def register(camera_params: str, input_image: str, output_image: str, vol: int,
     model.save_to_npz(model_output)
     print(f"Model saved to {model_output}")
 
-'''
+
 # example
 object_corners_3d = np.array([
     [0, 0, 0],  # Top-left
@@ -313,4 +313,4 @@ register(
     feature_method="ORB",
     model_output="model_script_test.npz"
 )
-'''
+
