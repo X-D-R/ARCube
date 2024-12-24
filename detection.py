@@ -87,7 +87,7 @@ class Detector:
         }
         self.camera_params = model.camera_params
 
-    def detect(self, image_path: str, coeff_lowes: int=0.7, useFlann: bool=True) -> (np.ndarray, np.ndarray, np.ndarray):
+    def detect(self, image_path: str, coeff_lowes: int=0.7, useFlann: bool=True) -> (np.ndarray, np.ndarray, np.ndarray, list, list):
         '''
         This func to detect object on image
         :param image_path: str, path to image, there we need to detect object
@@ -125,9 +125,9 @@ class Detector:
 
         else:
             print("Not enough matches are found - {}/{}".format(len(good), self.MIN_MATCH_COUNT))
-            img_points, inliers_original, inliers_frame = None, None, None
+            img_points, inliers_original, inliers_frame, good, mask = None, None, None, None, None
 
-        return img_points, inliers_original, inliers_frame
+        return img_points, inliers_original, inliers_frame, good, mask
 
     def _lowes_ratio_test(self, matches, coefficient=0.7) -> list:
         '''
