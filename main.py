@@ -4,6 +4,7 @@ import numpy as np
 from rectangle_model import register
 
 
+
 def parse_args_and_execute():
     '''Parse command-line arguments and execute the appropriate function (register or detect).'''
 
@@ -91,4 +92,3 @@ if __name__ == "__main__":
     # old
     python main.py register --input_image "old_files/andrew photo video/reference messy.jpg" --output_image "output_script_test.jpg" --crop_method "corner" --points 0 0 0 13 0 0 13 20.5 0 0 20.5 0 --feature_method "ORB" --model_output "model_script_test.npz"
     '''
-
