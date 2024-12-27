@@ -138,3 +138,4 @@ def register(input_image: str, output_image: str, object_corners_3d: np.ndarray,
 #     feature_method="ORB",
 #     model_output="model_script_test.npz"
 # )
+#
