@@ -1,7 +1,7 @@
 import argparse
 import numpy as np
 # from detection import Detector
-from rectangle_model import register
+from rectangle_model import RectangleModel, register
 
 
 
@@ -68,27 +68,28 @@ def parse_args_and_execute():
 
 
 if __name__ == "__main__":
-
     # example
     object_corners_3d = np.array([
         [0, 0, 0],  # Top-left
-        [13, 0, 0],  # Top-right
-        [13, 20.5, 0],  # Bottom-right
-        [0, 20.5, 0],  # Bottom-left
-        # Optionally, add more points if needed
+        [0.13, 0, 0],  # Top-right
+        [0.13, 0.205, 0],  # Bottom-right
+        [0, 0.205, 0],  # Bottom-left
+
     ], dtype="float32")
 
     register(
         input_image="old_files/andrew photo video/reference messy.jpg",
         output_image="output_script_test.jpg",
         object_corners_3d=object_corners_3d,
-        crop_method='photo',
+        crop_method='corner', # or use crop_method='photo',
         feature_method="ORB",
         model_output="model_script_test.npz"
     )
+    model = RectangleModel.load("model_script_test.npz")
+    print(model)
 
-    parse_args_and_execute()
+    # # or
+    # parse_args_and_execute()
     '''
-    # old
     python main.py register --input_image "old_files/andrew photo video/reference messy.jpg" --output_image "output_script_test.jpg" --crop_method "corner" --points 0 0 0 13 0 0 13 20.5 0 0 20.5 0 --feature_method "ORB" --model_output "model_script_test.npz"
     '''

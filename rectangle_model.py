@@ -7,7 +7,8 @@ from registation_ui import RegistrationUI
 class RectangleModel():
     def __init__(self, img: np.ndarray = None, output_path: str = '', feature_method: str = '',
                  key_points_2d: list = None, key_points_3d: list = None, des: np.ndarray = np.empty((0, 0)),
-                 object_corners_2d: list = None, object_corners_3d: list = None):
+                 object_corners_2d: list = None, object_corners_3d: list = None, horizontal_size: float = 0.0,
+                 vertical_size: float = 0.0):
         '''
         Initializes the RectangleModel class with the provided parameters.
 
@@ -17,8 +18,10 @@ class RectangleModel():
         :param key_points_2d: list, detected key points in 2d
         :param key_points_3d: list, detected key points in 3d
         :param des: np.ndarray, descriptors corresponding to the key points
-        :param object_corners_2d: list, 2D object corners for registration (default: None)
-        :param object_corners_3d: list, 3D object corners for registration (default: None)
+        :param object_corners_2d: list, 2D object corners for registration
+        :param object_corners_3d: list, 3D object corners for registration
+        :param horizontal_size: float, horizontal size of the object (width) for Olga
+        :param vertical_size: float, vertical size of the object (height)
         '''
         self.img = img
         self.output_path = output_path
@@ -28,6 +31,23 @@ class RectangleModel():
         self.des = des
         self.object_corners_2d = object_corners_2d
         self.object_corners_3d = object_corners_3d
+        self.horizontal_size = horizontal_size
+        self.vertical_size = vertical_size
+
+    def __str__(self):
+        return (
+            f"RectangleModel:\n"
+            f"  img: {'Loaded' if self.img is not None else 'Not Loaded'}\n"
+            f"  output_path: {self.output_path}\n"
+            f"  feature_method: {self.feature_method}\n"
+            f"  key_points_2d: {self.key_points_2d}\n"
+            f"  key_points_3d: {self.key_points_3d}\n"
+            f"  des: {self.des}\n"
+            f"  object_corners_2d: {self.object_corners_2d}\n"
+            f"  object_corners_3d: {self.object_corners_3d}\n"
+            f"  horizontal_size: {self.horizontal_size}\n"
+            f"  vertical_size: {self.vertical_size}"
+        )
 
     def upload_image(self, input_path: str, output_path: str) -> None:
         '''
@@ -44,6 +64,17 @@ class RectangleModel():
         except Exception as e:
             raise ValueError(f"An error occurred while loading the image: {e}")
 
+    def calculate_object_size(self):
+        '''Calculates horizontal_size and vertical_size of the object.'''
+        if self.object_corners_2d.shape != (4, 2):
+            raise ValueError("Передайте массив из 4 точек с координатами (x, y).")
+
+        horizontal_size = np.linalg.norm(self.object_corners_2d[1] - self.object_corners_2d[0])
+        vertical_size = np.linalg.norm(self.object_corners_2d[3] - self.object_corners_2d[0])
+        self.horizontal_size = horizontal_size
+        self.vertical_size = vertical_size
+
+
     def save_to_npz(self, filename: str) -> None:
         '''
         Saves the model's attributes to a .npz file.
@@ -51,17 +82,22 @@ class RectangleModel():
         :param filename: str, path to save the .npz file
         :return: None
         '''
+        keypoints = [{'pt': kp.pt, 'size': kp.size, 'angle': kp.angle, 'response': kp.response,
+                      'octave': kp.octave, 'class_id': kp.class_id} for kp in self.key_points_2d]
+
         np.savez(
             filename,
             output_path=self.output_path or "",
             feature_method=self.feature_method or "",
-            key_points_2d=keypoints_to_array(self.key_points_2d) if self.key_points_2d is not None else [],
-            key_points_3d=keypoints_to_array(self.key_points_3d) if self.key_points_3d is not None else [],
+            key_points_2d=keypoints if keypoints is not None else [],
+            key_points_3d=self.key_points_3d if self.key_points_3d is not None else [],
             des=self.des if self.des is not None and self.des.size > 0 else np.empty((0, 0)),
             object_corners_2d=self.object_corners_2d if self.object_corners_2d is not None and len(
                 self.object_corners_2d) > 0 else [],
             object_corners_3d=self.object_corners_3d if self.object_corners_3d is not None and len(
-                self.object_corners_3d) > 0 else []
+                self.object_corners_3d) > 0 else [],
+            horizontal_size=self.horizontal_size,
+            vertical_size=self.vertical_size
         )
 
     @classmethod
@@ -80,16 +116,22 @@ class RectangleModel():
             if key not in data:
                 raise KeyError(f"Missing key {key} in the loaded data.")
 
+        keypoints = [cv.KeyPoint(kp['pt'][0], kp['pt'][1], kp['size'], kp['angle'],
+                                 kp['response'], kp['octave'], kp['class_id'])
+                     for kp in data['key_points_2d']]
+
         new_object = cls(
             img=None,
             output_path=data["output_path"].item() if isinstance(data["output_path"], np.ndarray) else data[
                 "output_path"],
             feature_method=data.get("feature_method"),
-            key_points_2d=array_to_keypoints(data["key_points_2d"]) if "key_points_2d" in data else [],
-            key_points_3d=array_to_keypoints(data["key_points_3d"]) if "key_points_3d" in data else [],
+            key_points_2d=keypoints,
+            key_points_3d=data["key_points_3d"],
             des=data.get("des"),
             object_corners_2d=data.get("object_corners_2d"),
             object_corners_3d=data.get("object_corners_3d"),
+            horizontal_size=data.get("horizontal_size"),
+            vertical_size=data.get("vertical_size")
         )
 
         output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray)
@@ -123,22 +165,9 @@ class RectangleModel():
         self.des = des
         self.object_corners_2d = object_corners_2d
         self.object_corners_3d = object_corners_3d
+        self.calculate_object_size()
         self.save_to_npz(model_output)
         print(f"rectangle model saved to {model_output}")
-
-
-def keypoints_to_array(keypoints):
-    """Convert cv2.KeyPoint objects to a serializable format."""
-    if len(keypoints) > 0 and isinstance(keypoints[0], cv.KeyPoint):
-        return np.array([[kp.pt[0], kp.pt[1], kp.size, kp.angle, kp.response, kp.octave, kp.class_id] for kp in keypoints])
-    return np.array(keypoints)  # Assume already serialized if not cv2.KeyPoint
-
-
-
-def array_to_keypoints(array):
-    '''Convert an array back to cv2.KeyPoint objects.'''
-    return [cv.KeyPoint(x=pt[0], y=pt[1], size=pt[2], angle=pt[3],
-                        response=pt[4], octave=int(pt[5]), class_id=int(pt[6])) for pt in array]
 
 
 def register(input_image: str, output_image: str, object_corners_3d: np.ndarray,
@@ -168,31 +197,3 @@ def register(input_image: str, output_image: str, object_corners_3d: np.ndarray,
                                                    key_points_3d, des, object_corners_2d, object_corners_3d,
                                                    model_output)
 
-
-# example
-object_corners_3d = np.array([
-    [0, 0, 0],  # Top-left
-    [13, 0, 0],  # Top-right
-    [13, 20.5, 0],  # Bottom-right
-    [0, 20.5, 0],  # Bottom-left
-    # Optionally, add more points if needed
-], dtype="float32")
-
-register(
-    input_image="old_files/andrew photo video/reference messy.jpg",
-    output_image="output_script_test.jpg",
-    object_corners_3d=object_corners_3d,
-    crop_method='corner',
-    feature_method="ORB",
-    model_output="model_script_test.npz"
-)
-
-model = RectangleModel.load("model_script_test.npz")
-print(model.img)
-print(model.output_path)
-print(model.feature_method)
-print(model.key_points_2d)
-print(model.key_points_3d)
-print(model.des)
-print(model.object_corners_2d)
-print(model.object_corners_3d)
