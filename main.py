@@ -69,23 +69,23 @@ def parse_args_and_execute():
 
 if __name__ == "__main__":
 
-    # # example
-    # object_corners_3d = np.array([
-    #     [0, 0, 0],  # Top-left
-    #     [13, 0, 0],  # Top-right
-    #     [13, 20.5, 0],  # Bottom-right
-    #     [0, 20.5, 0],  # Bottom-left
-    #     # Optionally, add more points if needed
-    # ], dtype="float32")
-    #
-    # register(
-    #     input_image="old_files/andrew photo video/reference messy.jpg",
-    #     output_image="output_script_test.jpg",
-    #     object_corners_3d=object_corners_3d,
-    #     crop_method='corner',
-    #     feature_method="ORB",
-    #     model_output="model_script_test.npz"
-    # )
+    # example
+    object_corners_3d = np.array([
+        [0, 0, 0],  # Top-left
+        [13, 0, 0],  # Top-right
+        [13, 20.5, 0],  # Bottom-right
+        [0, 20.5, 0],  # Bottom-left
+        # Optionally, add more points if needed
+    ], dtype="float32")
+
+    register(
+        input_image="old_files/andrew photo video/reference messy.jpg",
+        output_image="output_script_test.jpg",
+        object_corners_3d=object_corners_3d,
+        crop_method='photo',
+        feature_method="ORB",
+        model_output="model_script_test.npz"
+    )
 
     parse_args_and_execute()
     '''
