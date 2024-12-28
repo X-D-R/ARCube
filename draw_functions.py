@@ -2,10 +2,19 @@ import cv2 as cv
 import numpy as np
 
 
-def draw_tracks(mask, frame, good_new, good_old):
-    for i, (new, old) in enumerate(zip(good_new, good_old)):
-        a, b = new.ravel()
-        c, d = old.ravel()
+def draw_tracks(mask, frame, start_keypoints, end_keypoints):
+    '''
+    Draws lines (tracks) and circles (keypoints) on the frame for visualization of Lucas-Kanade optical flow.
+
+    :param mask: np.ndarray, mask image for drawing purposes.
+    :param frame: np.ndarray, video frame or image.
+    :param start_keypoints: np.ndarray, array of start 2D keypoints.
+    :param end_keypoints: np.ndarray, array of end 2D keypoints.
+    :return: (np.ndarray, np.ndarray), updated mask, updated frame.
+    '''
+    for i, (start, end) in enumerate(zip(start_keypoints, end_keypoints)):
+        a, b = start.ravel()
+        c, d = end.ravel()
         cv.line(mask, (int(a), int(b)), (int(c), int(d)), (0, 255, 0), 1)
         frame = cv.circle(frame, (int(a), int(b)), 2, (0, 0, 255), -1)
 
@@ -69,7 +78,8 @@ def upload_video_by_frames(video_path: str, output_folder_path: str) -> None:
         ind += 1
 
 
-def upload_video_by_frames_undistorted(video_path: str, output_folder_path: str, camera_matrix: np.ndarray, distortion: np.ndarray) -> None:
+def upload_video_by_frames_undistorted(video_path: str, output_folder_path: str, camera_matrix: np.ndarray,
+                                       distortion: np.ndarray) -> None:
     '''
     This func upload video using cv
     from given path and save as undistorted images to chosen folder
