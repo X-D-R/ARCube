@@ -94,3 +94,4 @@ def upload_video_by_frames_undistorted(video_path: str, output_folder_path: str,
         dst = cv.undistort(frame, mtx, dist, None, newcameramtx)
         cv.imwrite(output_folder_path + 'frame_' + str(ind) + '.png', frame)
         ind += 1
+
