@@ -20,20 +20,6 @@ def draw_tracks(mask, frame, start_keypoints, end_keypoints):
 
     return mask, frame
 
-
-def upload_image(path: str) -> np.ndarray:
-    '''
-    This func should upload image using cv
-    from given path and return it
-    :param path: str
-    :return: np.ndarray
-    '''
-    img = cv.imread(path)
-    if img is None:
-        raise ValueError("Error opening image file")
-    return img
-
-
 def draw_contours_of_box(image_path: str, output_path: str, img_points: np.ndarray, color=(0, 0, 255),
                          thickness=15) -> None:
     '''
@@ -45,7 +31,7 @@ def draw_contours_of_box(image_path: str, output_path: str, img_points: np.ndarr
     :param color: tuple, RGB tuple, for example RED is (255, 0, 0)
     :param thickness: int, the thickness of lines
     '''
-    img = upload_image(image_path)
+    img = cv.imread(image_path)
     img = cv.polylines(img, [np.int32(img_points[::2])], True, color, thickness)
     img = cv.polylines(img, [np.int32(img_points[1::2])], True, color, thickness)
     img = cv.polylines(img, [np.int32(img_points[:2:])], True, color, thickness)
