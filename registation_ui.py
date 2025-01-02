@@ -78,22 +78,7 @@ class RegistrationUI():
         self.object_corners_2d = np.array(points_2d, dtype="float32")
         print(f"Selected corners: {self.object_corners_2d}")
 
-    def get_2d_3d_corners(self) -> list:
-        '''
-        Combines 2D and 3D corner pairs into a single list.
-
-        :return: list of dictionaries where each dictionary contains a 2D-3D pair
-        '''
-        assert len(self.object_corners_2d) == len(self.object_corners_3d), \
-            "Number of 2D and 3D corners must match."
-
-        corners_2d_3d = [
-            {'2d': self.object_corners_2d[i], '3d': self.object_corners_3d[i]}
-            for i in range(len(self.object_corners_2d))
-        ]
-        return corners_2d_3d
-
-    def register_object_corners(self, img_path: str, object_corners_3d: np.ndarray, crop_method: str) -> list:
+    def register_object_corners(self, img_path: str, object_corners_3d: np.ndarray, crop_method: str) -> tuple:
         '''
         Performs the full process of registering object corners, including loading the image,
         setting 3D corners, and selecting 2D corners interactively or automatically.
@@ -101,11 +86,12 @@ class RegistrationUI():
         :param img_path: str, path to the input image
         :param object_corners_3d: np.ndarray, 3D coordinates of the object corners
         :param crop_method: str, method for selecting 2D corners ("photo" or "corner")
-        :return: list of dictionaries, each containing a 2D-3D corner pair
+        :return: tuple of 2 lists with  2D, 3D corners
         '''
         self.upload_image(img_path)
         self.insert_object_corners_3d(object_corners_3d)
         self.select_object_corners(crop_method)
-        corners_2d_3d = self.get_2d_3d_corners()
+        object_corners_2d = self.object_corners_2d
+        object_corners_3d = self.object_corners_3d
         print("Registration object corners completed!")
-        return corners_2d_3d
+        return object_corners_2d, object_corners_3d
