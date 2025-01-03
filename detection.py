@@ -107,25 +107,24 @@ class Detector:
         self.load_model_params(model_path)
         self.instance_method(use_flann)
 
-
     def set_detector_by_model(self, camera_path: str, model: RectangleModel, use_flann: bool = True) -> None:
         self.load_camera_params(camera_path)
         self.get_model_params(model)
         self.instance_method(use_flann)
 
-    def detect(self, image_path: str, coeff_lowes: int = 0.7) -> (np.ndarray, np.ndarray, np.ndarray):
+    def detect_path(self, image_path: str, coeff_lowes: int = 0.7) -> (np.ndarray, np.ndarray, np.ndarray):
         '''
         This func to detect object on image
         :param image_path: str, path to image, there we need to detect object
         :param coeff_lowes: int, 0 < coefficient < 1
-        :param use_flann: bool, use Flann-based matcher or not
         :return: (np.ndarray, np.ndarray, np.ndarray, list, list), result vertices of object, inliers on source image, inliers on that image, good matches, mask for debug
         '''
         img = cv.imread(image_path)
         src_pts, dst_pts = np.float32(), np.float32()
         if img is None:
             raise ValueError("There is no image on this path")
-        kp1, des1 = self.registration_params["key_points_3d"], self.registration_params["des"]  # kp should be in 3D real coords
+        kp1, des1 = self.registration_params["key_points_3d"], self.registration_params[
+            "des"]  # kp should be in 3D real coords
         kp2, des2 = self.descriptor.detectAndCompute(img, None)
         if not self.use_flann:
             matches = self.matcher.match(des1, des2)
@@ -133,21 +132,61 @@ class Detector:
             matches = self.matcher.knnMatch(des1, des2, 2)
         good = self._lowes_ratio_test(matches, coeff_lowes)
         if len(good) > self.MIN_MATCH_COUNT:
-            src_pts = np.float32([[kp1[m.queryIdx][0], kp1[m.queryIdx][1], kp1[m.queryIdx][2]] for m in good]).reshape(-1, 1, 3)
+            src_pts = np.float32([[kp1[m.queryIdx][0], kp1[m.queryIdx][1], kp1[m.queryIdx][2]] for m in good]).reshape(
+                -1, 1, 3)
             dst_pts = np.float32([[kp2[m.trainIdx].pt[0], kp2[m.trainIdx].pt[1]] for m in good]).reshape(-1, 1, 2)
             mtx, dist = self.camera_params["mtx"], self.camera_params["dist"]
             valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist)
             obj_points = self.registration_params["object_corners_3d"]
             rvecs = cv.Rodrigues(rvec)[0]
             img_points, _ = cv.projectPoints(obj_points, rvecs, tvec, mtx, dist)
-            print(obj_points, img_points)
             inliers_original, inliers_frame = src_pts[mask], dst_pts[mask]
 
         else:
             print("Not enough matches are found - {}/{}".format(len(good), self.MIN_MATCH_COUNT))
             img_points, inliers_original, inliers_frame, good, mask = None, None, None, None, None
 
-        return img_points, src_pts, dst_pts
+        return img_points, inliers_original, inliers_frame
+
+    def detect(self, image: np.ndarray, coeff_lowes: int = 0.7) -> (np.ndarray, np.ndarray, np.ndarray):
+        '''
+        This func to detect object on image
+        :param image: np.ndarray, image, there we need to detect object
+        :param coeff_lowes: int, 0 < coefficient < 1
+        :return: (np.ndarray, np.ndarray, np.ndarray, list, list), result vertices of object, inliers on source image, inliers on that image, good matches, mask for debug
+        '''
+        src_pts, dst_pts = np.float32(), np.float32()
+        if image is None:
+            raise ValueError("There is no image on this path")
+        kp1, des1 = self.registration_params["key_points_3d"], self.registration_params[
+            "des"]  # kp should be in 3D real coords
+        kp2, des2 = self.descriptor.detectAndCompute(image, None)
+        if not self.use_flann:
+            matches = self.matcher.match(des1, des2)
+        else:
+            matches = self.matcher.knnMatch(des1, des2, 2)
+        good = self._lowes_ratio_test(matches, coeff_lowes)
+        if len(good) > self.MIN_MATCH_COUNT:
+            src_pts = np.float32([[kp1[m.queryIdx][0], kp1[m.queryIdx][1], kp1[m.queryIdx][2]] for m in good]).reshape(
+                -1, 1, 3)
+            dst_pts = np.float32([[kp2[m.trainIdx].pt[0], kp2[m.trainIdx].pt[1]] for m in good]).reshape(-1, 1, 2)
+            mtx, dist = self.camera_params["mtx"], self.camera_params["dist"]
+            valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist)
+            obj_points = self.registration_params["object_corners_3d"]
+            if valid:
+                rvecs = cv.Rodrigues(rvec)[0]
+                img_points, _ = cv.projectPoints(obj_points, rvecs, tvec, mtx, dist)
+                mask = mask.ravel().tolist()
+                inliers_original, inliers_frame = src_pts[mask], dst_pts[mask]
+            else:
+                print("No good keypoints")
+                img_points, inliers_original, inliers_frame = None, None, None
+
+        else:
+            print("Not enough matches are found - {}/{}".format(len(good), self.MIN_MATCH_COUNT))
+            img_points, inliers_original, inliers_frame = None, None, None
+
+        return img_points, inliers_original, inliers_frame
 
     def _lowes_ratio_test(self, matches, coefficient=0.7) -> list:
         '''
@@ -166,7 +205,7 @@ class Detector:
 
 def detect_pose(p_feat, sift_3d, cameraMatrix, distCoeffs):
     if len(p_feat) > 3 and len(p_feat) == len(sift_3d):
-        valid, rvec, tvec = cv.solvePnP(sift_3d, p_feat, cameraMatrix, distCoeffs)
+        valid, rvec, tvec, mask = cv.solvePnPRansac(sift_3d, p_feat, cameraMatrix, distCoeffs)
         rvecs = cv.Rodrigues(rvec)[0]
         return valid, rvecs, tvec
     return False
