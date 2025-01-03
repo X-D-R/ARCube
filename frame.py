@@ -1,7 +1,8 @@
 import cv2 as cv
 import numpy as np
 from rectangle_model import register
-from klt-tracker_class import KLT_Tracker
+from klt_tracker_class import KLT_Tracker
+from detection import detect_pose
 
 def detect_features(shot, model, h, w, img1):  # detecting features, matching features
     MIN_MATCH_COUNT = 10
@@ -51,17 +52,7 @@ def detect_features(shot, model, h, w, img1):  # detecting features, matching fe
     return s_d, features  # 3D features, 2D features
 
 
-def detect_pose(p_feat, sift_3d, cameraMatrix, distCoeffs):
-    if len(p_feat) > 3 and len(p_feat) == len(sift_3d):
-        valid, rvec, tvec = cv.solvePnP(sift_3d, p_feat, cameraMatrix, distCoeffs)
-        rvecs = cv.Rodrigues(rvec)[0]
-        return valid, rvecs, tvec
-    return False
-
-
-
-
-class frame_by_registration:
+class FrameRegistration:
     def __init__(self):
         return
 
@@ -131,7 +122,7 @@ def track_frame(reference_path: str = None, camera_parameters_path: str = None, 
 
     cap = cv.VideoCapture(video_path)  # load video file
 
-    tracker = frame_by_registration()
+    tracker = FrameRegistration()
 
     object_corners_3d = np.array([
         [0, 0, 0],  # Top-left
@@ -171,7 +162,7 @@ def track_frame(reference_path: str = None, camera_parameters_path: str = None, 
             kpoints_3d, kpoints_2d = detect_features(previous_frame, model, h, w, img1)
             mask = np.zeros_like(previous_frame)
         good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d, kpoints_3d)
-        corners_2D = frame_by_registration.find_new_corners(kpoints_3d, kpoints_2d, cameraMatrix, distCoeffs, corners3D)
+        corners_2D = FrameRegistration.find_new_corners(kpoints_3d, kpoints_2d, cameraMatrix, distCoeffs, corners3D)
         frame = cv.polylines(frame, [np.int32(corners_2D)], True, 255, 3, cv.LINE_AA)
         img = cv.add(frame, mask)
         imgSize = img.shape

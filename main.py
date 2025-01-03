@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 from rectangle_model import RectangleModel, register
 from detection import Detector
-from draw_functions import draw_contours_of_box
+from draw_functions import draw_contours_of_rectangle
 
 
 
@@ -113,8 +113,8 @@ if __name__ == "__main__":
     detector = Detector()
     #detector.set_detector_by_model("CameraParams/CameraParams.npz", model, True)
     detector.set_detector("CameraParams/CameraParams.npz", "model_test.npz", True)
-    img_points, inliers_original, inliers_frame, good, mask = detector.detect("videoframes/frame_0.png")
-    draw_contours_of_box("videoframes/frame_0.png", "contours_drawn.png", img_points)
+    img_points, src_pts, dst_pts = detector.detect("videoframes/frame_0.png")
+    draw_contours_of_rectangle("videoframes/frame_0.png", "contours_drawn.png", img_points)
 
     # # or
     # parse_args_and_execute()

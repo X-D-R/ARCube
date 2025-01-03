@@ -1,7 +1,6 @@
 import cv2 as cv
 import numpy as np
 from rectangle_model import RectangleModel
-import matplotlib.pyplot as plt
 
 
 class Detector:
@@ -114,8 +113,7 @@ class Detector:
         self.get_model_params(model)
         self.instance_method(use_flann)
 
-    def detect(self, image_path: str, coeff_lowes: int = 0.7) -> (
-            np.ndarray, np.ndarray, np.ndarray, list, list):
+    def detect(self, image_path: str, coeff_lowes: int = 0.7) -> (np.ndarray, np.ndarray, np.ndarray):
         '''
         This func to detect object on image
         :param image_path: str, path to image, there we need to detect object
@@ -124,6 +122,7 @@ class Detector:
         :return: (np.ndarray, np.ndarray, np.ndarray, list, list), result vertices of object, inliers on source image, inliers on that image, good matches, mask for debug
         '''
         img = cv.imread(image_path)
+        src_pts, dst_pts = np.float32(), np.float32()
         if img is None:
             raise ValueError("There is no image on this path")
         kp1, des1 = self.registration_params["key_points_3d"], self.registration_params["des"]  # kp should be in 3D real coords
@@ -148,7 +147,7 @@ class Detector:
             print("Not enough matches are found - {}/{}".format(len(good), self.MIN_MATCH_COUNT))
             img_points, inliers_original, inliers_frame, good, mask = None, None, None, None, None
 
-        return img_points, inliers_original, inliers_frame, good, mask
+        return img_points, src_pts, dst_pts
 
     def _lowes_ratio_test(self, matches, coefficient=0.7) -> list:
         '''
@@ -163,3 +162,11 @@ class Detector:
                 good.append(m)
 
         return good
+
+
+def detect_pose(p_feat, sift_3d, cameraMatrix, distCoeffs):
+    if len(p_feat) > 3 and len(p_feat) == len(sift_3d):
+        valid, rvec, tvec = cv.solvePnP(sift_3d, p_feat, cameraMatrix, distCoeffs)
+        rvecs = cv.Rodrigues(rvec)[0]
+        return valid, rvecs, tvec
+    return False
