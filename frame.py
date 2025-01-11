@@ -214,6 +214,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
     Images = []
     n = 50
     count = 1
+    height, width, channels = 0, 0, 0
     while True:
         ret, frame = cap.read()
         if frame is None:
@@ -230,10 +231,13 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
         good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d, kpoints_3d)
         print(len(kpoints_3d), len(good_new))
         object_corners_2d = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs, object_corners_3d)
-        frame = cv.polylines(frame, [np.int32(object_corners_2d)], True, 255, 3, cv.LINE_AA)
+        if object_corners_2d is not None:
+            frame = cv.polylines(frame, [np.int32(object_corners_2d)], True, 255, 3, cv.LINE_AA)
+        else:
+            break
         img = cv.add(frame, mask)
         imgSize = img.shape
-
+        height, width, channels = imgSize
         Images.append(img)
         if len(frame) > 0:
             previous_frame = frame.copy()
@@ -242,8 +246,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
 
         count += 1
     #saving video
-    height, width, channels = imgSize
-
+    print(height, width, channels)
     fourcc = cv.VideoWriter_fourcc(*'mp4v')
 
     video = cv.VideoWriter(output_path, fourcc, 30, (width, height))
@@ -254,4 +257,5 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
             break
 
     video.release()
+    print('Video saved successfully')
     cv.destroyAllWindows()
