@@ -67,7 +67,7 @@ def parse_args_and_execute():
     #     )
     # else:
     #     print("Invalid command. Use 'register' or 'detect'.")
-
+#
 
 if __name__ == "__main__":
     # example
