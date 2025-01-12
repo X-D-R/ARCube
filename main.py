@@ -30,17 +30,15 @@ def parse_args_and_execute():
     register_parser.add_argument('--model_output', type=str, required=True,
                                  help="Path to save the model parameters")
 
-    # Subcommand for detection
-    detect_parser = subparsers.add_parser('detect', help="Detect features in an image or video")
-
-    detect_parser.add_argument('--model_input', type=str, required=True, help="Path to the saved model file")
-    detect_parser.add_argument('--camera_params', type=str, help="Path to camera parameters file (optional)")
-    detect_parser.add_argument('--input_image', type=str, help="Path to input image for detection")
-    detect_parser.add_argument('--input_video', type=str, help="Path to input video for detection")
-    detect_parser.add_argument('--video', action='store_true', help="True if you wand to detect video,"
-                                                                    "false if you want to detect photo")
-    detect_parser.add_argument('--output_image', type=str, help="Path to output image after detection")
-    detect_parser.add_argument('--output_video', type=str, help="Path to output video after detection")
+    # # Subcommand for detection
+    # detect_parser = subparsers.add_parser('detect', help="Detect features in an image or video")
+    #
+    # detect_parser.add_argument('--model_input', type=str, required=True, help="Path to the saved model file")
+    # detect_parser.add_argument('--camera_params', type=str, help="Path to camera parameters file (optional)")
+    # detect_parser.add_argument('--input_image', type=str, help="Path to input image for detection")
+    # detect_parser.add_argument('--input_video', type=str, help="Path to input video for detection")
+    # detect_parser.add_argument('--use_flann', action='store_true', help="Use FLANN-based matching")
+    # detect_parser.add_argument('--draw_match', action='store_true', help="Draw matches on the detected image/video")
 
     args = parser.parse_args()
 
@@ -58,22 +56,20 @@ def parse_args_and_execute():
             feature_method=args.feature_method,
             model_output=args.model_output
         )
-    elif args.command == 'detect':
-        model = RectangleModel.load(args.model_input)
-        detector = Detector()
-        detector.set_detector_by_model(args.camera_params, model, True)
-        if args.video:
-            track_frame(detector, args.input_video, args.output_video)
-        else:
-            img_points, src_pts, dst_pts = detector.detect_path(args.input_image)
-            draw_contours_of_rectangle(args.input_image, args.output_image, img_points)
-    else:
-        print("Invalid command. Use 'register' or 'detect'.")
-#
+    # elif args.command == 'detect':
+    #     detect(
+    #         model_input=args.model_input,
+    #         camera_params=args.camera_params,
+    #         input_image=args.input_image,
+    #         input_video=args.input_video,
+    #         use_flann=args.use_flann if args.use_flann is not None else False,
+    #         draw_match=args.draw_match if args.draw_match is not None else False
+    #     )
+    # else:
+    #     print("Invalid command. Use 'register' or 'detect'.")
+
 
 if __name__ == "__main__":
-
-    '''
     # example
     object_corners_3d = np.array([
         [0, 0, 0],  # Top-left
@@ -82,6 +78,7 @@ if __name__ == "__main__":
         [0, 0.205, 0],  # Bottom-left
 
     ], dtype="float32")
+    '''
     register(
         input_image="old_files/andrew photo video/reference messy.jpg",
         output_image="output_script_test.jpg",
@@ -96,7 +93,6 @@ if __name__ == "__main__":
     detector.set_model("CameraParams/CameraParams.npz")
     detector.detect("")
     '''
-
     object_corners_3d = np.array([
         [0, 0, 0],  # Top-left
         [0.14, 0, 0],  # Top-right
@@ -105,7 +101,7 @@ if __name__ == "__main__":
 
     ], dtype="float32")
     register(
-        input_image="book.jpg",
+        input_image="new_book_check/book.jpg",
         output_image="output_script_test.jpg",
         object_corners_3d=object_corners_3d,
         crop_method='corner',  # or use crop_method='photo',
@@ -113,13 +109,14 @@ if __name__ == "__main__":
         model_output="model_script_test.npz"
     )
     model = RectangleModel.load("model_script_test.npz")
-    #print(model)
+    model.save_to_npz("model_test")
+    print(model)
     detector = Detector()
-    detector.set_detector_by_model("CameraParams/CameraParams.npz", model, True)
-    #detector.set_detector("CameraParams/CameraParams.npz", "model_script_test.npz", True)
-    #img_points, src_pts, dst_pts = detector.detect_path("videoframes/frame_0.png")
-    #draw_contours_of_rectangle("videoframes/frame_0.png", "contours_drawn.png", img_points)
-    track_frame(detector, "new_book_check/book_video_2.mp4", "new_book_result.mp4")
+    #detector.set_detector_by_model("CameraParams/CameraParams.npz", model, True)
+    detector.set_detector("CameraParams/CameraParams.npz", "model_test.npz", True)
+    img_points, src_pts, dst_pts = detector.detect_path("videoframes/frame_0.png")
+    draw_contours_of_rectangle("videoframes/frame_0.png", "contours_drawn.png", img_points)
+    track_frame(detector, "new_book_check/book_video_2.mp4", "new_book_result.mp4", 50)
 
     # # or
     # parse_args_and_execute()
