@@ -22,7 +22,7 @@ def draw_tracks(mask, frame, start_keypoints, end_keypoints):
 
 
 def draw_contours_of_rectangle(image_path: str, output_path: str, img_points: np.ndarray, color=(0, 0, 255),
-                         thickness=15) -> None:
+                               thickness=15) -> None:
     '''
     This func draw contours of rectangle
     and save image to selected path
@@ -60,7 +60,7 @@ def draw_contours_of_box(image_path: str, output_path: str, img_points: np.ndarr
     return
 
 
-def split_video_by_frames(video_path: str, output_folder_path: str) -> None:
+def split_video_to_frames(video_path: str, output_folder_path: str) -> None:
     '''
     This func should upload video using cv
     from given path and save as array of images
@@ -82,8 +82,8 @@ def split_video_by_frames(video_path: str, output_folder_path: str) -> None:
         ind += 1
 
 
-def split_video_by_frames_undistorted(video_path: str, output_folder_path: str, camera_matrix: np.ndarray,
-                                       distortion: np.ndarray) -> None:
+def split_video_to_frames_undistorted(video_path: str, output_folder_path: str, camera_matrix: np.ndarray,
+                                      distortion: np.ndarray) -> None:
     '''
     This func upload video using cv
     from given path and save as undistorted images to chosen folder
@@ -108,4 +108,3 @@ def split_video_by_frames_undistorted(video_path: str, output_folder_path: str, 
         dst = cv.undistort(frame, mtx, dist, None, newcameramtx)
         cv.imwrite(output_folder_path + 'frame_' + str(ind) + '.png', frame)
         ind += 1
-

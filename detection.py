@@ -177,7 +177,8 @@ class Detector:
                 valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist)
                 self.previous_rvec, self.previous_tvec = rvec, tvec
             else:
-                valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist, self.previous_rvec, self.previous_tvec)
+                valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist, self.previous_rvec,
+                                                            self.previous_tvec)
                 self.previous_rvec, self.previous_tvec = rvec, tvec
             obj_points = self.registration_params["object_corners_3d"]
             if valid:

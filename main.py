@@ -6,7 +6,6 @@ from draw_functions import draw_contours_of_rectangle
 from frame import track_frame, old_track_frame
 
 
-
 def parse_args_and_execute():
     '''Parse command-line arguments and execute the appropriate function (register or detect).'''
 
@@ -108,11 +107,11 @@ if __name__ == "__main__":
         feature_method="SIFT",
         model_output="model_script_test.npz"
     )'''
-    #model = RectangleModel.load("model_script_test.npz")
-    #model.save_to_npz("model_test")
-    #print(model)
+    # model = RectangleModel.load("model_script_test.npz")
+    # model.save_to_npz("model_test")
+    # print(model)
     detector = Detector()
-    #detector.set_detector_by_model("CameraParams/CameraParams.npz", model, True)
+    # detector.set_detector_by_model("CameraParams/CameraParams.npz", model, True)
     detector.set_detector("CameraParams/CameraParams.npz", "model_test.npz", True)
     img_points, src_pts, dst_pts = detector.detect_path("videoframes/frame_0.png")
     draw_contours_of_rectangle("videoframes/frame_0.png", "contours_drawn.png", img_points)
