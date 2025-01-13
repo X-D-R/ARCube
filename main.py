@@ -100,23 +100,23 @@ if __name__ == "__main__":
         [0, 0.21, 0],  # Bottom-left
 
     ], dtype="float32")
-    register(
-        input_image="new_book_check/book.jpg",
+    '''register(
+        input_image="new_book_check/book_3.jpg",
         output_image="output_script_test.jpg",
         object_corners_3d=object_corners_3d,
         crop_method='corner',  # or use crop_method='photo',
         feature_method="SIFT",
         model_output="model_script_test.npz"
-    )
-    model = RectangleModel.load("model_script_test.npz")
-    model.save_to_npz("model_test")
-    print(model)
+    )'''
+    #model = RectangleModel.load("model_script_test.npz")
+    #model.save_to_npz("model_test")
+    #print(model)
     detector = Detector()
     #detector.set_detector_by_model("CameraParams/CameraParams.npz", model, True)
     detector.set_detector("CameraParams/CameraParams.npz", "model_test.npz", True)
     img_points, src_pts, dst_pts = detector.detect_path("videoframes/frame_0.png")
     draw_contours_of_rectangle("videoframes/frame_0.png", "contours_drawn.png", img_points)
-    track_frame(detector, "new_book_check/book_video_2.mp4", "new_book_result.mp4", 50)
+    track_frame(detector, "new_book_check/book_video_2.mp4", "new_book_result.mp4", 30)
 
     # # or
     # parse_args_and_execute()

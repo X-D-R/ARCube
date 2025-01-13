@@ -12,6 +12,8 @@ class Detector:
         self.descriptor = cv.ORB.create()  # base
         self.matcher = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)  # base
         self.use_flann = False
+        self.previous_rvec = None
+        self.previous_tvec = None
 
     def instance_method(self, use_flann=True) -> None:
         '''
@@ -171,7 +173,12 @@ class Detector:
                 -1, 1, 3)
             dst_pts = np.float32([[kp2[m.trainIdx].pt[0], kp2[m.trainIdx].pt[1]] for m in good]).reshape(-1, 1, 2)
             mtx, dist = self.camera_params["mtx"], self.camera_params["dist"]
-            valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist)
+            if self.previous_rvec is None or self.previous_tvec is None:
+                valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist)
+                self.previous_rvec, self.previous_tvec = rvec, tvec
+            else:
+                valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist, self.previous_rvec, self.previous_tvec)
+                self.previous_rvec, self.previous_tvec = rvec, tvec
             obj_points = self.registration_params["object_corners_3d"]
             if valid:
                 rvecs = cv.Rodrigues(rvec)[0]
