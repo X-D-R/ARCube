@@ -134,13 +134,13 @@ def old_track_frame(reference_path: str = None, camera_parameters_path: str = No
     ], dtype="float32")
     model = register(
         input_image=reference_path,
-        output_image="output_script_test.jpg",
+        output_image="OutputImages/output_script_test.jpg",
         object_corners_3d=object_corners_3d,
         crop_method='corner',
         feature_method="SIFT",
-        model_output="model_script_test.npz"
+        model_output="ModelParams/model_script_test.npz"
     )
-    with np.load("model_script_test.npz") as file:
+    with np.load("ModelParams/model_script_test.npz") as file:
         corners2D = file['2d']
         corners3D = file['3d']
 
@@ -193,13 +193,14 @@ def old_track_frame(reference_path: str = None, camera_parameters_path: str = No
     cv.destroyAllWindows()
 
 
-def track_frame(detector: Detector, video_path: str = None, output_path: str = None, track_length: int = 50) -> None:
+def track_frame(detector: Detector, video_path: str = None, output_path: str = None, track_length: int = 50, fps: int = 30) -> None:
     '''
     This func tracks object on video (with detection every track_length) and save video to output
     :param detector: Detector, detector, that used to detect object
     :param video_path: str, path to original video
     :param output_path: str, destination where video should be saved
     :param track_length: int, length of frames that should be tracked until new detection
+    :param fps: int, frame per second (optional), 30 fps is usually used
     :return: None
     '''
     img = detector.registration_params['img']
@@ -272,7 +273,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
 
     fourcc = cv.VideoWriter_fourcc(*'mp4v')
 
-    video = cv.VideoWriter(output_path, fourcc, 30, (width, height))
+    video = cv.VideoWriter(output_path, fourcc, fps, (width, height))
 
     for i in range(len(Images)):
         video.write(Images[i])

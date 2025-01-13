@@ -80,13 +80,13 @@ if __name__ == "__main__":
     '''
     register(
         input_image="old_files/andrew photo video/reference messy.jpg",
-        output_image="output_script_test.jpg",
+        output_image="OutputImages/output_script_test.jpg",
         object_corners_3d=object_corners_3d,
         crop_method='corner', # or use crop_method='photo',
         feature_method="ORB",
-        model_output="model_script_test.npz"
+        model_output="ModelParams/model_script_test.npz"
     )
-    model = RectangleModel.load("model_script_test.npz")
+    model = RectangleModel.load("ModelParams/model_script_test.npz")
     print(model)
     detector = Detector()
     detector.set_model("CameraParams/CameraParams.npz")
@@ -99,26 +99,26 @@ if __name__ == "__main__":
         [0, 0.21, 0],  # Bottom-left
 
     ], dtype="float32")
-    '''register(
+    register(
         input_image="new_book_check/book_3.jpg",
-        output_image="output_script_test.jpg",
+        output_image="OutputImages/output_script_test.jpg",
         object_corners_3d=object_corners_3d,
         crop_method='corner',  # or use crop_method='photo',
         feature_method="SIFT",
-        model_output="model_script_test.npz"
-    )'''
-    # model = RectangleModel.load("model_script_test.npz")
-    # model.save_to_npz("model_test")
-    # print(model)
+        model_output="ModelParams/model_script_test.npz"
+    )
+    model = RectangleModel.load("ModelParams/model_script_test.npz")
+    model.save_to_npz("ModelParams/model_test")
+    print(model)
     detector = Detector()
     # detector.set_detector_by_model("CameraParams/CameraParams.npz", model, True)
-    detector.set_detector("CameraParams/CameraParams.npz", "model_test.npz", True)
+    detector.set_detector("CameraParams/CameraParams.npz", "ModelParams/model_test.npz", True)
     img_points, src_pts, dst_pts = detector.detect_path("videoframes/frame_0.png")
-    draw_contours_of_rectangle("videoframes/frame_0.png", "contours_drawn.png", img_points)
-    track_frame(detector, "new_book_check/book_video_2.mp4", "new_book_result.mp4", 30)
+    draw_contours_of_rectangle("videoframes/frame_0.png", "OutputImages/contours_drawn.png", img_points)
+    track_frame(detector, "new_book_check/book_video_2.mp4", "OutputVideos/new_book_main_result.mp4", 30, 30)
 
     # # or
     # parse_args_and_execute()
     '''
-    python main.py register --input_image "old_files/andrew photo video/reference messy.jpg" --output_image "output_script_test.jpg" --crop_method "corner" --points 0 0 0 13 0 0 13 20.5 0 0 20.5 0 --feature_method "ORB" --model_output "model_script_test.npz"
+    python main.py register --input_image "old_files/andrew photo video/reference messy.jpg" --output_image "OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 13 0 0 13 20.5 0 0 20.5 0 --feature_method "ORB" --model_output "ModelParams/model_script_test.npz"
     '''
