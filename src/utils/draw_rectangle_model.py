@@ -1,6 +1,5 @@
 import cv2 as cv
 import numpy as np
-from Draw_functions import upload_image
 
 
 class RectangleModelDrawer:
@@ -19,7 +18,7 @@ class RectangleModelDrawer:
         :param color: tuple, RGB tuple, for example RED is (255, 0, 0)
         :param thickness: int, the thickness of lines
         '''
-        img = upload_image(image_path)
+        img = cv.imread(image_path)
         img = cv.polylines(img, [np.int32(img_points[::2])], True, color, thickness)
         img = cv.polylines(img, [np.int32(img_points[1::2])], True, color, thickness)
         img = cv.polylines(img, [np.int32(img_points[:2:])], True, color, thickness)

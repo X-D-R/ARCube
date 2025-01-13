@@ -1,6 +1,6 @@
 import cv2 as cv
 import numpy as np
-from rectangle_model import RectangleModel
+from src.registration.rectangle_model import RectangleModel
 
 
 class Detector:

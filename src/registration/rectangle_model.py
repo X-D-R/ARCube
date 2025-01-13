@@ -1,7 +1,7 @@
 import cv2 as cv
 import numpy as np
-from registration import Registration
-from registation_ui import RegistrationUI
+from src.registration.registration import Registration
+from src.registration.registration_ui import RegistrationUI
 
 
 class RectangleModel():

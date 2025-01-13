@@ -61,8 +61,8 @@ You can install it using the `requirements.txt` file.
 Example:
 
 ```python
-from registration import Model
-from detection import Detector
+from src.registration.registration import Model
+from src.detection.detection import Detector
 
 # Step 1: Create Model class object and load camera parameters
 model = Model()
@@ -70,10 +70,10 @@ model.load_camera_params("./CameraParams/CameraParams.npz")
 
 # Step 2: Load an image and register the object
 model.upload_image('path/to/input_image.jpg', 'output_image.jpg')
-model.register('SIFT') # "ORB", "KAZE", "AKAZE", "BRISK", "SIFT"
+model.register('SIFT')  # "ORB", "KAZE", "AKAZE", "BRISK", "SIFT"
 
 # Step 3: Crop the image if needed
-model.crop_image_by_clicks() #or
+model.crop_image_by_clicks()  # or
 # points = np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
 # model.crop_image_by_points(points)
 
@@ -86,13 +86,13 @@ model = Model.load(model_path)
 
 # Step 6: Create Detector class object and load  Model parametres
 detector = Detector()
-detector.get_model_params(model) # or
+detector.get_model_params(model)  # or
 # detector.load_model_params(model_path)
 detector.instance_method(True)
 
 # Step 7: Detect object (image) on image/photo
-detector.detect_image('path/to/target_image.jpg', useFlann=True, drawMatch=True) #or
-#detector.detect_video('path/to/target_video.mp4'")
+detector.detect_image('path/to/target_image.jpg', useFlann=True, drawMatch=True)  # or
+# detector.detect_video('path/to/target_video.mp4'")
 ```
 ## Scripts
 ### Running the Script with Command-Line Arguments

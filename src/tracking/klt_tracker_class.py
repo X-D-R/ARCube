@@ -1,6 +1,6 @@
 import cv2 as cv
 import numpy as np
-from draw_functions import draw_tracks
+from src.utils.draw_functions import draw_tracks
 
 
 class KLT_Tracker:
