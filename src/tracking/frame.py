@@ -107,7 +107,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
                                                                              kpoints_3d)
                 object_corners_2d = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs,
                                                              object_corners_3d)
-                frame = cv.polylines(frame, [np.int32(object_corners_2d)], True, color, 3, cv.LINE_AA)
+                frame = cv.polylines(frame, [object_corners_2d.astype('int32')], True, color, 3, cv.LINE_AA)
                 img = cv.add(frame, mask)
                 imgSize = img.shape
                 Images.append(img)
