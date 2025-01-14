@@ -115,7 +115,7 @@ if __name__ == "__main__":
     detector.set_detector("../CameraParams/CameraParams.npz", "../ModelParams/model_test.npz", True)
     img_points, src_pts, dst_pts = detector.detect_path("../examples/images/new_book_check.png")
     draw_contours_of_rectangle("../examples/images/new_book_check.png", "../OutputFiles/OutputImages/contours_drawn.png", img_points)
-    track_frame(detector, "../new_book_check/new_book_video_main.mp4", "../OutputFiles/OutputVideos/new_book_video_main_result.mp4", 120, 30)
+    track_frame(detector, "../new_book_check/new_book_video_main.mp4", "../OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4", 60, 30, (0, 0, 255))
 
     # # or
     # parse_args_and_execute()
