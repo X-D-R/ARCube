@@ -5,54 +5,6 @@ from src.tracking.klt_tracker_class import KLT_Tracker
 from src.detection.detection import detect_pose, Detector
 
 
-def detect_features(shot, model, h, w, img1):  # detecting features, matching features
-    MIN_MATCH_COUNT = 10
-    sift = cv.SIFT_create()
-    kp1, des1 = model.kp, model.des
-    # kp1, des1 = sift.detectAndCompute(img1, None)
-    kp2, des2 = sift.detectAndCompute(shot, None)  # detect features
-    FLANN_INDEX_KDTREE = 1
-    index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-    search_params = dict(checks=50)
-    flann = cv.FlannBasedMatcher(index_params, search_params)
-
-    matches = flann.knnMatch(des1, des2, k=2)
-
-    good = []
-    for m, n in matches:
-        if m.distance < 0.6 * n.distance:
-            good.append(m)
-
-    if len(good) > MIN_MATCH_COUNT:
-        src_pts = np.float32([kp1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
-        dst_pts = np.float32([kp2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
-
-        M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
-        matchesMask = mask.ravel().tolist()
-
-        features = []
-
-        ob = []
-        for i, m in enumerate(good):
-            if matchesMask[i]:
-                features.append(dst_pts[i])
-                ob.append(src_pts[i])
-
-        s_d = []
-        for i in ob:
-            x, y = i[0][0], i[0][1]
-            s_d.append([[x, y, 0]])
-        s_d = np.array(s_d)
-
-        features = np.array(features)
-
-    else:
-        print("Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT))
-        matchesMask = None
-
-    return s_d, features  # 3D features, 2D features
-
-
 class FrameRegistration:
     def __init__(self):
         return
@@ -108,92 +60,8 @@ class FrameRegistration:
             return None
 
 
-# Example usage
-
-
-def old_track_frame(reference_path: str = None, camera_parameters_path: str = None, video_path: str = None) -> None:
-    img1 = cv.imread(reference_path, cv.IMREAD_GRAYSCALE)
-    h, w = img1.shape
-
-    # img_ = 'reference.jpg'  # load reference photo for model
-    # camera_params = 'cam_params.npz'  # load camera parameters
-
-    with np.load(camera_parameters_path) as file:
-        cameraMatrix = file['cameraMatrix']
-        distCoeffs = file['dist']
-
-    cap = cv.VideoCapture(video_path)  # load video file
-
-    tracker = FrameRegistration()
-
-    object_corners_3d = np.array([
-        [0, 0, 0],  # Top-left
-        [w - 1, 0, 0],  # Top-right
-        [w - 1, h - 1, 0],  # Bottom-right
-        [0, h - 1, 0],  # Bottom-left
-    ], dtype="float32")
-    model = register(
-        input_image=reference_path,
-        output_image="OutputImages/output_script_test.jpg",
-        object_corners_3d=object_corners_3d,
-        crop_method='corner',
-        feature_method="SIFT",
-        model_output="ModelParams/model_script_test.npz"
-    )
-    with np.load("../../ModelParams/model_script_test.npz") as file:
-        corners2D = file['2d']
-        corners3D = file['3d']
-
-    ret, previous_frame = cap.read()
-    if not ret:
-        print("Failed to read the first frame.")
-        exit()
-
-    kpoints_3d, kpoints_2d = detect_features(previous_frame, model, h, w, img1)
-    mask = np.zeros_like(previous_frame)
-    Images = []
-    n = 50
-    count = 1
-    while True:
-        ret, frame = cap.read()
-        if frame is None:
-            break
-
-        if count % n == 0:
-            ret, previous_frame = cap.read()
-            kpoints_3d, kpoints_2d = detect_features(previous_frame, model, h, w, img1)
-            mask = np.zeros_like(previous_frame)
-        good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d, kpoints_3d)
-        corners_2D = FrameRegistration.find_new_corners(kpoints_3d, kpoints_2d, cameraMatrix, distCoeffs, corners3D)
-        frame = cv.polylines(frame, [np.int32(corners_2D)], True, 255, 3, cv.LINE_AA)
-        img = cv.add(frame, mask)
-        imgSize = img.shape
-
-        Images.append(img)
-        if len(frame) > 0:
-            previous_frame = frame.copy()
-            # print(count)
-
-        kpoints_2d = good_new.reshape(-1, 1, 2)
-
-        count += 1
-    # saving video
-    height, width, channels = imgSize
-
-    fourcc = cv.VideoWriter_fourcc(*'mp4v')
-
-    video = cv.VideoWriter('sifts.mp4', fourcc, 30, (width, height))
-
-    for i in range(len(Images)):
-        video.write(Images[i])
-        if (cv.waitKey(1) & 0xFF) == ord('q'):
-            break
-
-    video.release()
-    cv.destroyAllWindows()
-
-
-def track_frame(detector: Detector, video_path: str = None, output_path: str = None, track_length: int = 50, fps: int = 30) -> None:
+def track_frame(detector: Detector, video_path: str = None, output_path: str = None, track_length: int = 50,
+                fps: int = 30, color: tuple = (255, 0, 0)) -> None:
     '''
     This func tracks object on video (with detection every track_length) and save video to output
     :param detector: Detector, detector, that used to detect object
@@ -201,6 +69,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
     :param output_path: str, destination where video should be saved
     :param track_length: int, length of frames that should be tracked until new detection
     :param fps: int, frame per second (optional), 30 fps is usually used
+    :param color: tuple, color of frame in BGR color scheme (255, 0 , 0) - Blue
     :return: None
     '''
     img = detector.registration_params['img']
@@ -238,7 +107,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
                                                                              kpoints_3d)
                 object_corners_2d = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs,
                                                              object_corners_3d)
-                frame = cv.polylines(frame, [np.int32(object_corners_2d)], True, (255, 0, 0), 3, cv.LINE_AA)
+                frame = cv.polylines(frame, [object_corners_2d.astype('int32')], True, color, 3, cv.LINE_AA)
                 img = cv.add(frame, mask)
                 imgSize = img.shape
                 Images.append(img)
@@ -254,7 +123,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
         good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d, kpoints_3d)
         object_corners_2d = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs, object_corners_3d)
         if object_corners_2d is not None:
-            frame = cv.polylines(frame, [np.int32(object_corners_2d)], True, (255, 0, 0), 3, cv.LINE_AA)
+            frame = cv.polylines(frame, [np.int32(object_corners_2d)], True, color, 3, cv.LINE_AA)
             img = cv.add(frame, mask)
         else:
             count = -1
