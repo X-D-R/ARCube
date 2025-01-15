@@ -147,8 +147,8 @@ if __name__ == "__main__":
         [0, 0.21, 0],  # Bottom-left
 
     ], dtype="float32") # example of object_corners_3d
-    # register_to_model(object_corners_3d, "../new_book_check/book_3.jpg", "../OutputFiles/OutputImages/output_script_test.jpg", "../ModelParams/model_script_test.npz", 'corner', "SIFT")
-    # set_model("../ModelParams/model_script_test.npz", "../ModelParams/model_test.npz")
+    register_to_model(object_corners_3d, "../new_book_check/book_3.jpg", "../OutputFiles/OutputImages/output_script_test.jpg", "../ModelParams/model_script_test.npz", 'corner', "SIFT")
+    set_model("../ModelParams/model_script_test.npz", "../ModelParams/model_test.npz")
 
     detector = set_detector("../ModelParams/model_test.npz", "../CameraParams/CameraParams.npz", True)
 
