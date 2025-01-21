@@ -1,8 +1,11 @@
 import argparse
-from src.detection.detection import Detector
-from src.utils.draw_functions import draw_contours_of_rectangle
-from src.tracking.frame import track_frame
+import os.path
+from detection.detection import Detector
+from tracking.frame import track_frame
+from utils.draw_functions import draw_contours_of_rectangle
 
+
+DET_DIR = os.path.split(os.path.split(os.path.abspath("detect.py"))[0])[0]
 
 def parse_args_and_execute():
     '''Parse command-line arguments and execute the appropriate function (detect).'''

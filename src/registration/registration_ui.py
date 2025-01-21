@@ -1,6 +1,9 @@
 import cv2 as cv
 import numpy as np
+import os.path
 
+
+MAIN_DIR = os.path.split(os.path.split(os.path.abspath("main.py"))[0])[0]
 
 class RegistrationUI():
     def __init__(self, img: np.ndarray = None, object_corners_2d: list = None, object_corners_3d: list = None):
@@ -49,7 +52,7 @@ class RegistrationUI():
         points_2d = []
         h, w = self.img.shape
         if crop_method == 'manual':
-            example_image = cv.imread('corners_choice_example.jpg')
+            example_image = cv.imread(os.path.join(MAIN_DIR, 'src\\registration\\corners_choice_example.jpg'))
             cv.imshow("Selection corners example", example_image)
             cv.waitKey(0)
 

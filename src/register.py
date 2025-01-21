@@ -1,7 +1,10 @@
 import argparse
 import numpy as np
-from src.registration.rectangle_model import RectangleModel, register
+import os.path
+from registration.rectangle_model import RectangleModel, register
 
+
+REG_DIR = os.path.split(os.path.split(os.path.abspath("register.py"))[0])[0]
 
 def parse_args_and_execute():
     '''Parse command-line arguments and execute the appropriate function (register).'''
@@ -73,9 +76,9 @@ if __name__ == "__main__":
         [0, 0.21, 0],  # Bottom-left
 
     ], dtype="float32") # example of object_corners_3d
-    register_to_model(object_corners_3d, "../new_book_check/book_3.jpg",
-                      "../OutputFiles/OutputImages/output_script_test.jpg", "../ModelParams/model_test.npz", 'manual',
-                      "SIFT")
+    register_to_model(object_corners_3d, os.path.join(REG_DIR, "ExampleFiles\\new_book_check\\book_3.jpg"),
+                      os.path.join(REG_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\output_script_test.jpg"),
+                      os.path.join(REG_DIR, "ExampleFiles\\ModelParams\\model_test.npz"), 'corner', "SIFT")
 
     # or
     # parse_args_and_execute()
