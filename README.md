@@ -1,6 +1,6 @@
 # Object registration and detection using OpenCV
 
-This project provides tools for registrating and detecting objects (images) in images and videos. 
+This project provides tools for registrating objects (images) and detecting in images and videos. 
 
 ## Table of Contents
 
@@ -15,19 +15,27 @@ This project provides tools for registrating and detecting objects (images) in i
 
 This project enables:
 - Loading camera calibration parameters.
-- Loading image, cropping it and giving the volume parameter for 3d frame.
+- Loading image, cropping it (through clicking on the object corners on the picture) and loading 3d parameters of the object .
 - Registrating object from image for futher detection.
+- Loading camera calibration parameters.
 - Detecting an object in images and videos using algorithms: "ORB", "KAZE", "AKAZE", "BRISK", "SIFT".
-- Displaying and saving detection results as image or video.
-- Using all the project features by scripts
+- Saving detection results as image or video.
+- Running registration and detection scripts
 
 ## Requirements
 
-- Python 3.x
-- OpenCV (cv2)
-- NumPy
-- Matplotlib (for visualization)
-- pyparsing
+- contourpy==1.3.0
+- cycler==0.12.1
+- fonttools==4.54.1
+- kiwisolver==1.4.7
+- matplotlib==3.9.2
+- numpy==2.1.3
+- opencv-python==4.10.0.84
+- packaging==24.1
+- pillow==11.0.0
+- pyparsing==3.2.0
+- python-dateutil==2.9.0.post0
+- six==1.16.0
 
 You can install it using the `requirements.txt` file.
 
@@ -48,52 +56,63 @@ You can install it using the `requirements.txt` file.
 
 ## Usage
 
-### Object Registration and Detection
+### Object Registration 
 
-1. **Create Model class object and load camera parameters** using Model() and the `load_camera_params` method.
-2. **Load an image and register the object** using the `upload_image` and 'register' (with a selected method: "ORB", "KAZE", "AKAZE", "BRISK", "SIFT") methods respectively
-3. **Crop the image if needed** using the `crop_image_by_clicks' or 'crop_image_by_points' method
-4. **Save the model parameters if needed** using the `save_to_npz' method
-5. **Load model parameters if needed** using the `load' method
-6. **Create Detector class object and load  Model parametres** using Detector() and the 'get_model_params' or 'load_model_params' method; then instance_method is needed
-7. **Detect object (image) on image/photo** using the `detect_image' or 'detect_video' method
+**First of all, open register.py**
+
+1. **Load 3d object parametres.**
+   
+You need to present object's corners points for model. object's corners format is a numpy array of 4 point, each points is measured in real metres with float32 type (x, y, z).
+
+Start with top-left corner point, and choose default values (0, 0, 0).
+Next comes top-right corner that is (x, 0, 0)
+Then botton-right point with (x, y, 0).
+The last is bottom-left point (0, y, 0).
+*Where x, y - width and lenght of the object.
+
+Here is an example:
+
+```python
+    object_corners_3d = np.array([
+        [0, 0, 0],  # Top-left
+        [0.14, 0, 0],  # Top-right
+        [0.14, 0.21, 0],  # Bottom-right
+        [0, 0.21, 0],  # Bottom-left
+
+    ], dtype="float32") # example of object_corners_3d
+```
+
+2. **Register object** using register_to_model function
+
+This function register object on given image. Function takes 6 params:
+-   :param object_corners_3d: np.ndarray, 3d coordinate points of object, dtype == np.float32
+-   :param input_image: str, path to original image of object
+-   :param output_image: str, path to where debug image should be saved
+-   :param crop_method: str, the method of cropping, 'corner' (don't crop) or 'manual' (place points directly on image)
+-   :param feature_method: str, the method of registration, base - SIFT
+-   :param register_output: str, the path to where registration parameters should be saved in .npz format
 
 Example:
 
 ```python
-from src.registration.registration import Model
-from src.detection.detection import Detector
-
-# Step 1: Create Model class object and load camera parameters
-model = Model()
-model.load_camera_params("./CameraParams/CameraParams.npz")
-
-# Step 2: Load an image and register the object
-model.upload_image('path/to/input_image.jpg', 'output_image.jpg')
-model.register('SIFT')  # "ORB", "KAZE", "AKAZE", "BRISK", "SIFT"
-
-# Step 3: Crop the image if needed
-model.crop_image_by_clicks()  # or
-# points = np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]])
-# model.crop_image_by_points(points)
-
-# Step 4: Save the model parameters if needed
-model_path = 'model_params.npz'
-model.save_to_npz(model_path)
-
-# Step 5: Load model parameters if needed
-model = Model.load(model_path)
-
-# Step 6: Create Detector class object and load  Model parametres
-detector = Detector()
-detector.get_model_params(model)  # or
-# detector.load_model_params(model_path)
-detector.instance_method(True)
-
-# Step 7: Detect object (image) on image/photo
-detector.detect_image('path/to/target_image.jpg', useFlann=True, drawMatch=True)  # or
-# detector.detect_video('path/to/target_video.mp4'")
+    register_to_model(object_corners_3d, "../new_book_check/book_3.jpg",
+                      "../OutputFiles/OutputImages/output_script_test.jpg", "../ModelParams/model_test.npz", 'corner',
+                      "SIFT")
 ```
+3. **About cropping the photo**
+   
+If the object is fully presented on the photo, takes the majority of the photo place and there is nothing that could identify the object wrong, then use 'corner' crop method
+Othewise if you want to crop the photo, use 'manual' crop method. 
+First, ou will see an example of how to crop the image.
+
+![corners_choice_example](https://github.com/user-attachments/assets/60989e46-4b3a-4bca-9560-6ca40693047f)
+
+Then you will see your photo. You have to choose object corners by clicking on them with your left mouse button in a certain order:
+1. Top-left
+2. Top-right
+3. Bottom-right
+4. Bottom-left
+
 ## Scripts
 ### Running the Script with Command-Line Arguments
 You can also run the script directly from the command line using argparse to specify the parameters. This allows you to register images or detect objects via terminal commands.
@@ -102,49 +121,40 @@ Examples presented below.
 
 1. **Register an Image**
 
-Use the following command to register an image:
+An example of how to run a command to register an image:
 
-```python
-python main.py register --camera_params "CameraParams/CameraParams.npz" \
-                        --input_image "old_files/andrew photo video/reference messy.jpg" \
-                        --output_image "OutputImages/output_script_test.jpg" \
-                        --crop_method "none" \
-                        --feature_method "SIFT" \
-                        --model_output "ModelParams/model_script_test.npz"
+```
+    python register.py register --input_image "../new_book_check/book_3.jpg" --output_image "../OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "../ModelParams/model_test.npz" 
 ```
 
 2. **Detect Features in an Image or Video**
 
-Use the following command to detect features:
+An example of how to run a command to detect features:
 
-```python
-python main.py detect --model_input "ModelParams/model_script_test.npz" \
-                     --input_image "old_files/andrew photo video/second pic messy.jpg" \
-                     --use_flann \
-                     --draw_match
-
+```
+    python detect.py detect --model_input "../ModelParams/model_test.npz" --camera_params "../CameraParams/CameraParams.npz" --input_video "../new_book_check/new_book_video_main.mp4" --video --output_video "../OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
 ```
 
 3. **Arguments:**
 
    **Register subcommand:**
    
-- --camera_params: Path to camera parameters file.
 - --input_image: Path to input image for registration.
 - --output_image: Path to save the registered image.
-- --crop_method: Method for cropping the image (options: clicks, points, none).
-- --points: Points for cropping (required if crop_method is points).
+- --crop_method: Method for cropping the image (options: 'manual', 'corner').
+- --points: List of 3D points (x1 y1 z1 x2 y2 z2 ... xn yn zn). Default is 4 points or 12 coordinates.
 - --feature_method: Feature detection method (ORB, KAZE, AKAZE, BRISK, SIFT).
 - --model_output: Path to save the model parameters.
 
    **Detect subcommand:**
    
 - --model_input: Path to the saved model file.
-- --camera_params: (Optional) Path to the camera parameters file for detection.
-- --input_image: (Optional) Path to the input image for detection.
-- --input_video: (Optional) Path to the input video for detection.
-- --use_flann: Flag to use FLANN-based matching (for images).
-- --draw_match: Flag to draw matches on the detected image.
+- --camera_params: Path to the camera parameters file for detection.
+- --input_image: Path to the input image for detection.
+- --input_video: Path to the input video for detection.
+- --video: Flag if you want to detect video, don't use if you want to detect photo.
+- --output_image: Path to output image (if u detected photo) after detection.
+- --output_video: Path to output video (if u detected video) after detection.
 
 ## License
 
