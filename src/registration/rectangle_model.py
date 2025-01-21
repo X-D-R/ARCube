@@ -178,7 +178,7 @@ def register(input_image: str, output_image: str, object_corners_3d: np.ndarray,
     :param input_image: str, path to the input image
     :param output_image: str, path to save the processed image
     :param object_corners_3d: np.ndarray, 3D coordinates of the object's corners
-    :param crop_method: str, method for selecting 2D corners ("photo" or "corner")
+    :param crop_method: str, the method of cropping, 'corner' (don't crop) or 'manual' (place points directly on image)
     :param feature_method: str, feature detection method to use (e.g., "ORB", "SIFT")
     :param model_output: str, path to save the model as a .npz file
     :return: None
