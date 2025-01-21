@@ -1,9 +1,9 @@
 import argparse
 import numpy as np
 import os.path
-from registration.rectangle_model import RectangleModel, register
+from src.registration.rectangle_model import RectangleModel, register
 
-MAIN_DIR = os.path.split(os.path.split(os.path.abspath("register.py"))[0])[0]
+MAIN_DIR = os.path.dirname(os.path.abspath("register.py"))
 
 
 def parse_args_and_execute():
@@ -38,8 +38,8 @@ def parse_args_and_execute():
                              "the total count is a multiple of 3.")
 
         object_corners_3d = np.array(args.points, dtype="float32").reshape(-1, 3)
-        register_to_model(object_corners_3d, args.input_image, args.output_image, args.crop_method, args.feature_method,
-                          args.model_output)
+        register_to_model(object_corners_3d, args.input_image, args.output_image, args.model_output, args.crop_method,
+                          args.feature_method)
         model = RectangleModel.load(args.model_output)
         print(model)
     else:
@@ -84,5 +84,5 @@ if __name__ == "__main__":
     # or
     # parse_args_and_execute()
     '''
-    python src/register.py register --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
+    python register.py register --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
     '''

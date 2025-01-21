@@ -1,10 +1,10 @@
 import argparse
 import os.path
-from detection.detection import Detector
-from tracking.frame import track_frame
-from utils.draw_functions import draw_contours_of_rectangle
+from src.detection.detection import Detector
+from src.tracking.frame import track_frame
+from src.utils.draw_functions import draw_contours_of_rectangle
 
-MAIN_DIR = os.path.split(os.path.split(os.path.abspath("detect.py"))[0])[0]
+MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
 
 
 def parse_args_and_execute():
@@ -85,5 +85,5 @@ if __name__ == "__main__":
     # or
     # parse_args_and_execute()
     '''
-    python src/detect.py detect --model_input "../ModelParams/model_test.npz" --camera_params "../CameraParams/CameraParams.npz" --input_video "../new_book_check/new_book_video_main.mp4" --video --output_video "../OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
+    python detect.py detect --model_input "ExampleFiles/ModelParams/model_test.npz" --camera_params "ExampleFiles/CameraParams/CameraParams.npz" --input_video "ExampleFiles/new_book_check/new_book_video_main.mp4" --video --output_video "ExampleFiles/OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
     '''
