@@ -61,18 +61,11 @@ if __name__ == "__main__":
     detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_test.npz"),
                             os.path.join(MAIN_DIR, "ExampleFiles\\CameraParams\\CameraParams.npz"), True)
 
-    # detecting photo
-    # img_points, src_pts, dst_pts = detector.detect_path(
-    #     os.path.join(MAIN_DIR, "ExampleFiles\\examples\\images\\new_book_check.png"))
-    # draw_contours_of_rectangle(os.path.join(MAIN_DIR, "ExampleFiles\\examples\\images\\new_book_check.png"),
-    #                            os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\contours_drawn.png"),
-    #                            img_points)
-
-    # detecting image
+    img_points, src_pts, dst_pts = detector.detect_path(os.path.join(MAIN_DIR, "ExampleFiles\\examples\\images\\new_book_check.png"))
+    draw_contours_of_rectangle(os.path.join(MAIN_DIR, "ExampleFiles\\examples\\images\\new_book_check.png"), os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\contours_drawn.png"), img_points)
     track_frame(detector, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\new_book_video_main.mp4"),
                 os.path.join(MAIN_DIR,
-                             "ExampleFiles\\OutputFiles/OutputVideos\\new_book_video_main_result_new_color.mp4"),
-                60, 30, (0, 0, 255))
+                             "ExampleFiles\\OutputFiles\\OutputVideos\\new_book_video_main_result_new_color.mp4"), 60, 30, (0, 0, 255))
 
     # or
     # parse_args_and_execute()
