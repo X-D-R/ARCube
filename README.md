@@ -135,7 +135,7 @@ Example:
 2. **Photo detection** using detect_photo function.
 
 This function detects object on the photo. Has 3 input params:
--   :param Detector, object of Detector class
+-   :param detector: Detector, object of Detector class
 -   :param input_file: str, path to image where we use detector
 -   :param output_file: str, path to store the image with detected photo
 
