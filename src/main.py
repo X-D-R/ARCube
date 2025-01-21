@@ -77,7 +77,7 @@ def register_to_model(object_corners_3d: np.ndarray, input_image: str, output_im
     :param object_corners_3d: np.ndarray, 3d coordinate points of object, dtype == np.float32
     :param input_image: str, path to original image of object
     :param output_image: str, path to where debug image should be saved
-    :param crop_method: str, the method of cropping, 'corner' (don't crop) or 'photo' (place points directly on image)
+    :param crop_method: str, the method of cropping, 'corner' (don't crop) or 'manual' (place points directly on image)
     :param feature_method: str, the method of registration, base - SIFT
     :param register_output: str, the path to where registration parameters should be saved in .npz format
     :return: None
@@ -120,25 +120,25 @@ def set_detector(model_params_file: str, camera_params_file: str, use_flann: boo
 
 if __name__ == "__main__":
     # example
-    object_corners_3d = np.array([
-        [0, 0, 0],  # Top-left
-        [0.14, 0, 0],  # Top-right
-        [0.14, 0.21, 0],  # Bottom-right
-        [0, 0.21, 0],  # Bottom-left
-
-    ], dtype="float32") # example of object_corners_3d
-    register_to_model(object_corners_3d, "../new_book_check/book_3.jpg", "../OutputFiles/OutputImages/output_script_test.jpg", "../ModelParams/model_script_test.npz", 'corner', "SIFT")
-    set_model("../ModelParams/model_script_test.npz", "../ModelParams/model_test.npz")
-
-    detector = set_detector("../ModelParams/model_test.npz", "../CameraParams/CameraParams.npz", True)
-
-    img_points, src_pts, dst_pts = detector.detect_path("../examples/images/new_book_check.png")
-    draw_contours_of_rectangle("../examples/images/new_book_check.png", "../OutputFiles/OutputImages/contours_drawn.png", img_points)
-    track_frame(detector, "../new_book_check/new_book_video_main.mp4", "../OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4", 60, 30, (0, 0, 255))
+    # object_corners_3d = np.array([
+    #     [0, 0, 0],  # Top-left
+    #     [0.14, 0, 0],  # Top-right
+    #     [0.14, 0.21, 0],  # Bottom-right
+    #     [0, 0.21, 0],  # Bottom-left
+    #
+    # ], dtype="float32") # example of object_corners_3d
+    # register_to_model(object_corners_3d, "../new_book_check/book_3.jpg", "../OutputFiles/OutputImages/output_script_test.jpg", "../ModelParams/model_script_test.npz", 'corner', "SIFT")
+    # set_model("../ModelParams/model_script_test.npz", "../ModelParams/model_test.npz")
+    #
+    # detector = set_detector("../ModelParams/model_test.npz", "../CameraParams/CameraParams.npz", True)
+    #
+    # img_points, src_pts, dst_pts = detector.detect_path("../examples/images/new_book_check.png")
+    # draw_contours_of_rectangle("../examples/images/new_book_check.png", "../OutputFiles/OutputImages/contours_drawn.png", img_points)
+    # track_frame(detector, "../new_book_check/new_book_video_main.mp4", "../OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4", 60, 30, (0, 0, 255))
 
     # # or
     # parse_args_and_execute()
     '''
-    python src\main.py register --input_image "../new_book_check/book_3.jpg" --output_image "../OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "../ModelParams/model_test.npz"
+    python main.py register --input_image "../new_book_check/book_3.jpg" --output_image "../OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "../ModelParams/model_test.npz"
     python src\main.py detect --model_input "../ModelParams/model_test.npz" --camera_params "../CameraParams/CameraParams.npz" --input_video "../new_book_check/new_book_video_main.mp4" --video --output_video "../OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
     '''

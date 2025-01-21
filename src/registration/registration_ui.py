@@ -40,7 +40,7 @@ class RegistrationUI():
         '''
         Allows the user to select 2D object corners interactively or automatically.
 
-        :param crop_method: str, the method for selecting corners ("photo" or "corner")
+        :param crop_method: str, the method of cropping, 'corner' (don't crop) or 'manual' (place points directly on image)
         :return: None
         '''
         if self.img is None:
@@ -48,7 +48,11 @@ class RegistrationUI():
 
         points_2d = []
         h, w = self.img.shape
-        if crop_method == 'photo':
+        if crop_method == 'manual':
+            example_image = cv.imread('corners_choice_example.jpg')
+            cv.imshow("Selection corners example", example_image)
+            cv.waitKey(0)
+
             max_height = 800
             scale = 1.0
             image = self.img
@@ -63,7 +67,7 @@ class RegistrationUI():
                     cv.imshow("Select Corners", image)
                     print(f"Selected corner: ({x}, {y})")
 
-            print("Mark object corners (from 4 to 7 points):")
+            print("Mark object corners 4 points:")
             cv.imshow("Select Corners", image)
             cv.setMouseCallback("Select Corners", click_event)
             cv.waitKey(0)
@@ -71,10 +75,12 @@ class RegistrationUI():
 
             if len(points_2d) < 4:
                 raise ValueError("At least 4 points are required to define the object.")
+            if len(points_2d) != self.object_corners_2d:
+                raise ValueError("Length of 2d and 3d points must be equal! 4 points are required.")
         elif crop_method == 'corner':
             points_2d.extend([[0, 0], [w, 0], [w, h], [0, h]])
         else:
-            raise ValueError("You chose wrong crop method, use 'photo' or 'corner' ")
+            raise ValueError("You chose wrong crop method, use 'manual' or 'corner' ")
         self.object_corners_2d = np.array(points_2d, dtype="float32")
         print(f"Selected corners: {self.object_corners_2d}")
 
@@ -85,7 +91,7 @@ class RegistrationUI():
 
         :param img_path: str, path to the input image
         :param object_corners_3d: np.ndarray, 3D coordinates of the object corners
-        :param crop_method: str, method for selecting 2D corners ("photo" or "corner")
+        :param crop_method: str, the method of cropping, 'corner' (don't crop) or 'manual' (place points directly on image)
         :return: tuple of 2 lists with  2D, 3D corners
         '''
         self.upload_image(img_path)
