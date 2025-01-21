@@ -1,5 +1,4 @@
 import argparse
-import numpy as np
 from src.detection.detection import Detector
 from src.utils.draw_functions import draw_contours_of_rectangle
 from src.tracking.frame import track_frame
@@ -16,11 +15,11 @@ def parse_args_and_execute():
     detect_parser = subparsers.add_parser('detect', help="Detect features in an image or video")
 
     detect_parser.add_argument('--model_input', type=str, required=True, help="Path to the saved model file")
-    detect_parser.add_argument('--camera_params', type=str, help="Path to camera parameters file (optional)")
+    detect_parser.add_argument('--camera_params', type=str, help="Path to camera parameters file ")
     detect_parser.add_argument('--input_image', type=str, help="Path to input image for detection")
     detect_parser.add_argument('--input_video', type=str, help="Path to input video for detection")
-    detect_parser.add_argument('--video', action='store_true', help="True if you wand to detect video,"
-                                                                    "false if you want to detect photo")
+    detect_parser.add_argument('--video', action='store_true', help="if you want to detect video,"
+                                                                    "don't use if you want to detect photo")
     detect_parser.add_argument('--output_image', type=str, help="Path to output image after detection")
     detect_parser.add_argument('--output_video', type=str, help="Path to output video after detection")
 

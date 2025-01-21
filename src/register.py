@@ -17,10 +17,11 @@ def parse_args_and_execute():
                                  help="Path to input image for registration")
     register_parser.add_argument('--output_image', type=str, required=True,
                                  help="Path to save the registered image")
-    register_parser.add_argument('--crop_method', type=str, choices=['photo', 'corner'], required=True,
-                                 help="Method for cropping the image ('photo' or 'corner')")
+    register_parser.add_argument('--crop_method', type=str, choices=['manual', 'corner'], required=True,
+                                 help="Method for cropping the image ('manual' or 'corner')")
     register_parser.add_argument('--points', type=float, nargs='+', required=True,
-                                 help="List of 3D points (x1 y1 z1 x2 y2 z2 ... xn yn zn)")
+                                 help="List of 3D points (x1 y1 z1 x2 y2 z2 ... xn yn zn). "
+                                      "Default is 4 points or 12 coordinates")
     register_parser.add_argument('--feature_method', type=str, choices=["ORB", "KAZE", "AKAZE", "BRISK", "SIFT"],
                                  default="ORB", help="Feature detection method (default='ORB')")
     register_parser.add_argument('--model_output', type=str, required=True,
