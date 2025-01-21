@@ -166,7 +166,7 @@ Example:
 ```
 
 ## Scripts
-### Running the Script with Command-Line Arguments DO NOT WORK RIGHT NOW(
+### Running the Script with Command-Line Arguments 
 You can also run the script directly from the command line using argparse to specify the parameters. This allows you to register images or detect objects via terminal commands.
 
 Examples presented below.
@@ -188,8 +188,7 @@ parse_args_and_execute()
 An example of how to run a command to register an image:
 
 ```
-python src/register.py register --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
-
+python register.py register --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
 ```
 
 2. **Detect Features in an Image or Video**
@@ -209,7 +208,7 @@ parse_args_and_execute()
 An example of how to run a command to detect features:
 
 ```
-    python detect.py detect --model_input "../ModelParams/model_test.npz" --camera_params "../CameraParams/CameraParams.npz" --input_video "../new_book_check/new_book_video_main.mp4" --video --output_video "../OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
+python detect.py detect --model_input "ExampleFiles/ModelParams/model_test.npz" --camera_params "ExampleFiles/CameraParams/CameraParams.npz" --input_video "ExampleFiles/new_book_check/new_book_video_main.mp4" --video --output_video "ExampleFiles/OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
 ```
 
 3. **Arguments:**
