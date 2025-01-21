@@ -1,10 +1,11 @@
 import argparse
 import numpy as np
-from src.registration.rectangle_model import RectangleModel, register
-from src.detection.detection import Detector
-from src.utils.draw_functions import draw_contours_of_rectangle
-from src.tracking.frame import track_frame
+from registration.rectangle_model import RectangleModel, register
+from detection.detection import Detector
+from tracking.frame import track_frame
+import os.path
 
+MAIN_DIR = os.path.split(os.path.split(os.path.abspath("main.py"))[0])[0]
 
 def parse_args_and_execute():
     '''Parse command-line arguments and execute the appropriate function (register or detect).'''
@@ -147,14 +148,16 @@ if __name__ == "__main__":
         [0, 0.21, 0],  # Bottom-left
 
     ], dtype="float32") # example of object_corners_3d
-    register_to_model(object_corners_3d, "../new_book_check/book_3.jpg", "../OutputFiles/OutputImages/output_script_test.jpg", "../ModelParams/model_script_test.npz", 'corner', "SIFT")
-    set_model("../ModelParams/model_script_test.npz", "../ModelParams/model_test.npz")
+    register_to_model(object_corners_3d, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\book_3.jpg"), os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\output_script_test.jpg"), os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_script_test.npz"), 'corner', "SIFT")
+    set_model(os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_script_test.npz"), os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_test.npz"))
 
-    detector = set_detector("../ModelParams/model_test.npz", "../CameraParams/CameraParams.npz", True)
+    detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_test.npz"),
+                            os.path.join(MAIN_DIR, "ExampleFiles\\CameraParams\\CameraParams.npz"), True)
 
     # img_points, src_pts, dst_pts = detector.detect_path("../examples/images/new_book_check.png")
     # draw_contours_of_rectangle("../examples/images/new_book_check.png", "../OutputFiles/OutputImages/contours_drawn.png", img_points)
-    track_frame(detector, "../new_book_check/new_book_video_main.mp4", "../OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4", 60, 30, (0, 0, 255))
+    track_frame(detector, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\new_book_video_main.mp4"),
+                os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles/OutputVideos\\new_book_video_main_result_new_color.mp4"), 60, 30, (0, 0, 255))
 
     # # or
     # parse_args_and_execute()
