@@ -3,8 +3,8 @@ import numpy as np
 import os.path
 from registration.rectangle_model import RectangleModel, register
 
+MAIN_DIR = os.path.split(os.path.split(os.path.abspath("register.py"))[0])[0]
 
-REG_DIR = os.path.split(os.path.split(os.path.abspath("register.py"))[0])[0]
 
 def parse_args_and_execute():
     '''Parse command-line arguments and execute the appropriate function (register).'''
@@ -67,6 +67,7 @@ def register_to_model(object_corners_3d: np.ndarray, input_image: str, output_im
         model_output=register_output
     )
 
+
 if __name__ == "__main__":
     # example of the object registration
     object_corners_3d = np.array([
@@ -75,13 +76,13 @@ if __name__ == "__main__":
         [0.14, 0.21, 0],  # Bottom-right
         [0, 0.21, 0],  # Bottom-left
 
-    ], dtype="float32") # example of object_corners_3d
-    register_to_model(object_corners_3d, os.path.join(REG_DIR, "ExampleFiles\\new_book_check\\book_3.jpg"),
-                      os.path.join(REG_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\output_script_test.jpg"),
-                      os.path.join(REG_DIR, "ExampleFiles\\ModelParams\\model_test.npz"), 'corner', "SIFT")
+    ], dtype="float32")  # example of object_corners_3d
+    register_to_model(object_corners_3d, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\book_3.jpg"),
+                      os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\output_script_test.jpg"),
+                      os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_test.npz"), 'corner', "SIFT")
 
     # or
     # parse_args_and_execute()
     '''
-    python register.py register --input_image "../new_book_check/book_3.jpg" --output_image "../OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "../ModelParams/model_test.npz"
+    python src/register.py register --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
     '''

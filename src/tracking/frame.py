@@ -148,7 +148,18 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
         video.write(Images[i])
         if (cv.waitKey(1) & 0xFF) == ord('q'):
             break
-
     video.release()
     print("Saved video")
+
+    max_height = 800
+    for i in range(len(Images)):
+        img = Images[i]
+        h, w, channels = img.shape
+        if h > max_height:
+            scale = max_height / h
+            img = cv.resize(img, (int(w * scale), int(h * scale)))
+        cv.imshow("Detected video. Press 'q' to close", img)
+        if cv.waitKey(25) & 0xFF == ord('q'):
+            break
+
     cv.destroyAllWindows()

@@ -35,6 +35,15 @@ def draw_contours_of_rectangle(image_path: str, output_path: str, img_points: np
     img = cv.imread(image_path)
     img = cv.polylines(img, [np.int32(img_points)], True, color, thickness)
     cv.imwrite(output_path, img)
+
+    max_height = 800
+    h, w, channels = img.shape
+    if h > max_height:
+        scale = max_height / h
+        img = cv.resize(img, (int(w * scale), int(h * scale)))
+    cv.imshow("Detected photo. Press enter to close", img)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
     return
 
 

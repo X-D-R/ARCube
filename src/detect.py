@@ -4,8 +4,8 @@ from detection.detection import Detector
 from tracking.frame import track_frame
 from utils.draw_functions import draw_contours_of_rectangle
 
-
 MAIN_DIR = os.path.split(os.path.split(os.path.abspath("detect.py"))[0])[0]
+
 
 def parse_args_and_execute():
     '''Parse command-line arguments and execute the appropriate function (detect).'''
@@ -65,11 +65,10 @@ if __name__ == "__main__":
     draw_contours_of_rectangle(os.path.join(MAIN_DIR, "ExampleFiles\\examples\\images\\new_book_check.png"), os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\contours_drawn.png"), img_points)
     track_frame(detector, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\new_book_video_main.mp4"),
                 os.path.join(MAIN_DIR,
-                             "ExampleFiles\\OutputFiles\\OutputVideos\\new_book_video_main_result_new_color.mp4"),
-                60, 30, (0, 0, 255))
+                             "ExampleFiles\\OutputFiles\\OutputVideos\\new_book_video_main_result_new_color.mp4"), 60, 30, (0, 0, 255))
 
     # or
     # parse_args_and_execute()
     '''
-    python detect.py detect --model_input "../ModelParams/model_test.npz" --camera_params "../CameraParams/CameraParams.npz" --input_video "../new_book_check/new_book_video_main.mp4" --video --output_video "../OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
+    python src/detect.py detect --model_input "../ModelParams/model_test.npz" --camera_params "../CameraParams/CameraParams.npz" --input_video "../new_book_check/new_book_video_main.mp4" --video --output_video "../OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
     '''

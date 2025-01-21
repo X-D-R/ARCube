@@ -4,11 +4,11 @@ from detection.detection import Detector
 from registration.rectangle_model import RectangleModel, register
 from tracking.frame import track_frame
 
-
 MAIN_DIR = os.path.split(os.path.split(os.path.abspath("main.py"))[0])[0]
 
 
-def register_to_model(object_corners_3d: np.ndarray, input_image: str, output_image: str, register_output: str, crop_method: str = 'corner', feature_method: str = 'SIFT') -> None:
+def register_to_model(object_corners_3d: np.ndarray, input_image: str, output_image: str, register_output: str,
+                      crop_method: str = 'corner', feature_method: str = 'SIFT') -> None:
     '''
     This function register object on given image
     :param object_corners_3d: np.ndarray, 3d coordinate points of object, dtype == np.float32
@@ -28,6 +28,7 @@ def register_to_model(object_corners_3d: np.ndarray, input_image: str, output_im
         model_output=register_output
     )
 
+
 def set_model(register_path: str, model_output: str) -> None:
     '''
     This function set model using registration params
@@ -38,6 +39,7 @@ def set_model(register_path: str, model_output: str) -> None:
     model = RectangleModel.load(register_path)
     model.save_to_npz(model_output)
     print(model)
+
 
 def set_detector(model_params_file: str, camera_params_file: str, use_flann: bool = True) -> Detector:
     '''
@@ -86,7 +88,7 @@ if __name__ == "__main__":
         [0.14, 0.21, 0],  # Bottom-right
         [0, 0.21, 0],  # Bottom-left
 
-    ], dtype="float32") # example of object_corners_3d
+    ], dtype="float32")  # example of object_corners_3d
     register_to_model(object_corners_3d, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\book_3.jpg"),
                       os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\output_script_test.jpg"),
                       os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_script_test.npz"), 'corner', "SIFT")
@@ -99,7 +101,8 @@ if __name__ == "__main__":
     # img_points, src_pts, dst_pts = detector.detect_path("../examples/images/new_book_check.png")
     # draw_contours_of_rectangle("../examples/images/new_book_check.png", "../OutputFiles/OutputImages/contours_drawn.png", img_points)
     track_frame(detector, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\new_book_video_main.mp4"),
-                os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles/OutputVideos\\new_book_video_main_result_new_color.mp4"),
+                os.path.join(MAIN_DIR,
+                             "ExampleFiles\\OutputFiles/OutputVideos\\new_book_video_main_result_new_color.mp4"),
                 60, 30, (0, 0, 255))
 
     # # or
