@@ -74,7 +74,6 @@ class RectangleModel():
         self.horizontal_size = horizontal_size
         self.vertical_size = vertical_size
 
-
     def save_to_npz(self, filename: str) -> None:
         '''
         Saves the model's attributes to a .npz file.
@@ -196,4 +195,3 @@ def register(input_image: str, output_image: str, object_corners_3d: np.ndarray,
     rect_model.register_and_save_rectangular_model(input_image, output_image, feature_method, key_points_2d,
                                                    key_points_3d, des, object_corners_2d, object_corners_3d,
                                                    model_output)
-

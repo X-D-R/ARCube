@@ -2,8 +2,8 @@ import cv2 as cv
 import numpy as np
 import os.path
 
-
 MAIN_DIR = os.path.split(os.path.split(os.path.abspath("main.py"))[0])[0]
+
 
 class RegistrationUI():
     def __init__(self, img: np.ndarray = None, object_corners_2d: list = None, object_corners_3d: list = None):
@@ -52,9 +52,20 @@ class RegistrationUI():
         points_2d = []
         h, w = self.img.shape
         if crop_method == 'manual':
-            example_image = cv.imread(os.path.join(MAIN_DIR, 'src\\registration\\corners_choice_example.jpg'))
+            example_image = cv.imread(
+                os.path.join(MAIN_DIR, "ExampleFiles\\examples\\images\\corners_choice_example.jpg"), cv.IMREAD_COLOR)
+
+            max_height = 800
+            scale1 = 1.0
+            h1, w1, channels = example_image.shape
+
+            if h1 > max_height:
+                scale1 = max_height / h1
+                example_image = cv.resize(example_image, (int(w1 * scale1), int(h1 * scale1)))
+
             cv.imshow("Selection corners example", example_image)
             cv.waitKey(0)
+            cv.destroyAllWindows()
 
             max_height = 800
             scale = 1.0
@@ -64,7 +75,7 @@ class RegistrationUI():
                 image = cv.resize(image, (int(w * scale), int(h * scale)))
 
             def click_event(event, x, y, flags, param):
-                if event == cv.EVENT_LBUTTONDOWN and len(points_2d) < 7:
+                if event == cv.EVENT_LBUTTONDOWN and len(points_2d) < 4:
                     points_2d.append([x, y])
                     cv.circle(image, (x, y), 5, (0, 255, 0), -1)
                     cv.imshow("Select Corners", image)
@@ -78,7 +89,7 @@ class RegistrationUI():
 
             if len(points_2d) < 4:
                 raise ValueError("At least 4 points are required to define the object.")
-            if len(points_2d) != self.object_corners_2d:
+            if len(points_2d) != len(self.object_corners_3d):
                 raise ValueError("Length of 2d and 3d points must be equal! 4 points are required.")
         elif crop_method == 'corner':
             points_2d.extend([[0, 0], [w, 0], [w, h], [0, h]])

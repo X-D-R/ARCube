@@ -4,8 +4,8 @@ from detection.detection import Detector
 from tracking.frame import track_frame
 from utils.draw_functions import draw_contours_of_rectangle
 
+MAIN_DIR = os.path.split(os.path.split(os.path.abspath("detect.py"))[0])[0]
 
-DET_DIR = os.path.split(os.path.split(os.path.abspath("detect.py"))[0])[0]
 
 def parse_args_and_execute():
     '''Parse command-line arguments and execute the appropriate function (detect).'''
@@ -58,13 +58,21 @@ def set_detector(model_params_file: str, camera_params_file: str, use_flann: boo
 
 if __name__ == "__main__":
     # example of the detection
-    detector = set_detector("../ModelParams/model_test.npz", "../CameraParams/CameraParams.npz", True)
+    detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_test.npz"),
+                            os.path.join(MAIN_DIR, "ExampleFiles\\CameraParams\\CameraParams.npz"), True)
 
-    img_points, src_pts, dst_pts = detector.detect_path("../examples/images/new_book_check.png")
-    draw_contours_of_rectangle("../examples/images/new_book_check.png",
-                               "../OutputFiles/OutputImages/contours_drawn.png", img_points)
-    track_frame(detector, "../new_book_check/new_book_video_main.mp4",
-                "../OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4", 60, 30, (0, 0, 255))
+    # detecting photo
+    # img_points, src_pts, dst_pts = detector.detect_path(
+    #     os.path.join(MAIN_DIR, "ExampleFiles\\examples\\images\\new_book_check.png"))
+    # draw_contours_of_rectangle(os.path.join(MAIN_DIR, "ExampleFiles\\examples\\images\\new_book_check.png"),
+    #                            os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\contours_drawn.png"),
+    #                            img_points)
+
+    # detecting image
+    track_frame(detector, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\new_book_video_main.mp4"),
+                os.path.join(MAIN_DIR,
+                             "ExampleFiles\\OutputFiles/OutputVideos\\new_book_video_main_result_new_color.mp4"),
+                60, 30, (0, 0, 255))
 
     # or
     # parse_args_and_execute()
