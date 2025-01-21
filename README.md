@@ -95,9 +95,9 @@ This function register object on given image. Function takes 6 params:
 Example:
 
 ```python
-    register_to_model(object_corners_3d, "../new_book_check/book_3.jpg",
-                      "../OutputFiles/OutputImages/output_script_test.jpg", "../ModelParams/model_test.npz", 'corner',
-                      "SIFT")
+    register_to_model(object_corners_3d, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\book_3.jpg"),
+                      os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\output_script_test.jpg"),
+                      os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_test.npz"), 'corner', "SIFT")
 ```
 3. **About cropping the photo**
    
@@ -113,21 +113,98 @@ Then you will see your photo. You have to choose object corners by clicking on t
 3. Bottom-right
 4. Bottom-left
 
+### Object detection
+
+After completed registration you can detect object on image or photo
+
+1. **Set detector with model parameters.** using set_detector function.
+
+This function set detector using model params. Has 3 input params and 1 output:
+-    :param model_params_file: str, path to where model should be saved
+-    :param camera_params_file: str, path to saved Camera parameters
+-    :param use_flann: bool, use FLANN-based matching or not
+-    :return: Detector, object of Detector class
+
+Example:
+
+```python
+    detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_test.npz"),
+                            os.path.join(MAIN_DIR, "ExampleFiles\\CameraParams\\CameraParams.npz"), True)
+```
+
+2. **Photo detection** using detect_photo function.
+
+This function detects object on the photo. Has 3 input params:
+-   :param Detector, object of Detector class
+-   :param input_file: str, path to image where we use detector
+-   :param output_file: str, path to store the image with detected photo
+
+Example:
+
+```python
+    detect_photo(detector, os.path.join(MAIN_DIR, "ExampleFiles\\examples\\images\\new_book_check.png"),
+                               os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\contours_drawn.png"))
+```
+
+3. **Video detection** using track_frame function.
+
+This func tracks object on video (with detection every track_length) and save video to output. Has 6 parameters:
+-   :param detector: Detector, detector, that used to detect object
+-   :param video_path: str, path to original video
+-   :param output_path: str, destination where video should be saved
+-   :param track_length: int, length of frames that should be tracked until new detection
+-   :param fps: int, frame per second (optional), 30 fps is usually used
+-   :param color: tuple, color of frame in BGR color scheme (255, 0 , 0) - Blue
+
+Example:
+
+```python
+    track_frame(detector, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\new_book_video_main.mp4"),
+                os.path.join(MAIN_DIR,
+                             "ExampleFiles\\OutputFiles/OutputVideos\\new_book_video_main_result_new_color.mp4"),
+                60, 30, (0, 0, 255))
+```
+
 ## Scripts
-### Running the Script with Command-Line Arguments
+### Running the Script with Command-Line Arguments DO NOT WORK RIGHT NOW(
 You can also run the script directly from the command line using argparse to specify the parameters. This allows you to register images or detect objects via terminal commands.
 
 Examples presented below.
 
 1. **Register an Image**
 
+In that case, in register.py after
+
+```python
+if __name__ == "__main__":
+```
+
+must be only: 
+
+```python
+parse_args_and_execute()
+```
+
 An example of how to run a command to register an image:
 
 ```
-    python register.py register --input_image "../new_book_check/book_3.jpg" --output_image "../OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "../ModelParams/model_test.npz" 
+python src/register.py register --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
+
 ```
 
 2. **Detect Features in an Image or Video**
+
+In that case, in detect.py after
+
+```python
+if __name__ == "__main__":
+```
+
+must be only: 
+
+```python
+parse_args_and_execute()
+```
 
 An example of how to run a command to detect features:
 
