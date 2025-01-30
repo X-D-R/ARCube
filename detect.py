@@ -10,34 +10,31 @@ MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
 def parse_args_and_execute():
     '''Parse command-line arguments and execute the appropriate function (detect).'''
 
-    parser = argparse.ArgumentParser(description="Registration and Detection")
+    parser = argparse.ArgumentParser(description="Detection")
 
-    subparsers = parser.add_subparsers(dest="command")
-
-    # Subcommand for detection
-    detect_parser = subparsers.add_parser('detect', help="Detect features in an image or video")
-
-    detect_parser.add_argument('--model_input', type=str, required=True, help="Path to the saved model file")
-    detect_parser.add_argument('--camera_params', type=str, help="Path to camera parameters file ")
-    detect_parser.add_argument('--input_image', type=str, help="Path to input image for detection")
-    detect_parser.add_argument('--input_video', type=str, help="Path to input video for detection")
-    detect_parser.add_argument('--video', action='store_true', help="if you want to detect video,"
+    parser.add_argument('--model', type=str, help="Path to the saved model file")
+    parser.add_argument('--demo', action='store_true', help="Use the default object model from the repository")
+    parser.add_argument('--camera_params', type=str, required=True, help="Path to camera parameters file ")
+    parser.add_argument('--input', type=str, required=True, help="Path to input image or video for detection")
+    parser.add_argument('--video', action='store_true', help="if you want to detect video,"
                                                                     "don't use if you want to detect photo")
-    detect_parser.add_argument('--output_image', type=str, help="Path to output image after detection")
-    detect_parser.add_argument('--output_video', type=str, help="Path to output video after detection")
+    parser.add_argument('--output', type=str, required=True, help="Path to output image or video after detection")
 
     args = parser.parse_args()
 
-    if args.command == 'detect':
-        detector = set_detector(args.model_input, args.camera_params)
-
-        if args.video:
-            track_frame(detector, args.input_video, args.output_video)
-        else:
-            img_points, src_pts, dst_pts = detector.detect_path(args.input_image)
-            draw_contours_of_rectangle(args.input_image, args.output_image, img_points)
+    if args.demo:
+        detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles", "ModelParams", "model_test.npz"),
+                                args.camera_params)
     else:
-        print("Invalid command. Use 'detect'.")
+        detector = set_detector(args.model, args.camera_params)
+
+    if args.video:
+        print('detecting object on video')
+        track_frame(detector, args.input, args.output)
+    else:
+        print('detecting object on photo')
+        img_points, src_pts, dst_pts = detector.detect_path(args.input)
+        draw_contours_of_rectangle(args.input, args.output, img_points)
 
 
 def set_detector(model_params_file: str, camera_params_file: str, use_flann: bool = True) -> Detector:
@@ -70,20 +67,22 @@ def detect_photo(detector: Detector, input_file: str, output_file: str):
 
 if __name__ == "__main__":
     # example of the detection
-    detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles", "ModelParams", "model_test.npz"),
-                            os.path.join(MAIN_DIR, "ExampleFiles", "CameraParams", "CameraParams.npz"), True)
-    # Photo detection
-    detect_photo(detector, os.path.join(MAIN_DIR, "ExampleFiles", "examples", "images", "new_book_check.png"),
-                 os.path.join(MAIN_DIR, "ExampleFiles", "OutputFiles", "OutputImages", "contours_drawn.png"))
-
-    # Video detection
-    track_frame(detector, os.path.join(MAIN_DIR, "ExampleFiles", "new_book_check", "new_book_video_main.mp4"),
-                os.path.join(MAIN_DIR,
-                             "ExampleFiles", "OutputFiles", "OutputVideos", "new_book_video_main_result_new_color.mp4"), 60,
-                30, (0, 0, 255))
+    # detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles", "ModelParams", "model_test.npz"),
+    #                         os.path.join(MAIN_DIR, "ExampleFiles", "CameraParams", "CameraParams.npz"), True)
+    # # Photo detection
+    # detect_photo(detector, os.path.join(MAIN_DIR, "ExampleFiles", "examples", "images", "new_book_check.png"),
+    #              os.path.join(MAIN_DIR, "ExampleFiles", "OutputFiles", "OutputImages", "contours_drawn.png"))
+    #
+    # # Video detection
+    # track_frame(detector, os.path.join(MAIN_DIR, "ExampleFiles", "new_book_check", "new_book_video_main.mp4"),
+    #             os.path.join(MAIN_DIR,
+    #                          "ExampleFiles", "OutputFiles", "OutputVideos", "new_book_video_main_result_new_color.mp4"), 60,
+    #             30, (0, 0, 255))
 
     # or
-    # parse_args_and_execute()
+    parse_args_and_execute()
     '''
-    python detect.py detect --model_input "ExampleFiles/ModelParams/model_test.npz" --camera_params "ExampleFiles/CameraParams/CameraParams.npz" --input_video "ExampleFiles/new_book_check/new_book_video_main.mp4" --video --output_video "ExampleFiles/OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
+    python detect.py --model "ExampleFiles/ModelParams/model_test.npz" --camera_params "ExampleFiles/CameraParams/CameraParams.npz" --input "ExampleFiles/new_book_check/new_book_video_main.mp4" --video --output "ExampleFiles/OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
+    
+    python detect.py --demo --camera_params "ExampleFiles/CameraParams/CameraParams.npz" --input "ExampleFiles/new_book_check/new_book_video_main.mp4" --video --output "ExampleFiles/OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
     '''
