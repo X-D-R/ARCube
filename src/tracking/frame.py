@@ -1,6 +1,5 @@
 import cv2 as cv
 import numpy as np
-from src.registration.rectangle_model import register
 from src.tracking.klt_tracker_class import KLT_Tracker
 from src.detection.detection import detect_pose, Detector
 

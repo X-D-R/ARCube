@@ -70,17 +70,17 @@ def detect_photo(detector: Detector, input_file: str, output_file: str):
 
 if __name__ == "__main__":
     # example of the detection
-    detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_test.npz"),
-                            os.path.join(MAIN_DIR, "ExampleFiles\\CameraParams\\CameraParams.npz"), True)
+    detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles", "ModelParams", "model_test.npz"),
+                            os.path.join(MAIN_DIR, "ExampleFiles", "CameraParams", "CameraParams.npz"), True)
     # Photo detection
-    detect_photo(detector, os.path.join(MAIN_DIR, "ExampleFiles\\examples\\images\\new_book_check.png"),
-                 os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\contours_drawn.png"))
+    detect_photo(detector, os.path.join(MAIN_DIR, "ExampleFiles", "examples", "images", "new_book_check.png"),
+                 os.path.join(MAIN_DIR, "ExampleFiles", "OutputFiles", "OutputImages", "contours_drawn.png"))
 
-    # # Video detection
-    # track_frame(detector, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\new_book_video_main.mp4"),
-    #             os.path.join(MAIN_DIR,
-    #                          "ExampleFiles\\OutputFiles\\OutputVideos\\new_book_video_main_result_new_color.mp4"), 60,
-    #             30, (0, 0, 255))
+    # Video detection
+    track_frame(detector, os.path.join(MAIN_DIR, "ExampleFiles", "new_book_check", "new_book_video_main.mp4"),
+                os.path.join(MAIN_DIR,
+                             "ExampleFiles", "OutputFiles", "OutputVideos", "new_book_video_main_result_new_color.mp4"), 60,
+                30, (0, 0, 255))
 
     # or
     # parse_args_and_execute()

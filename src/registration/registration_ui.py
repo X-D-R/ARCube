@@ -53,7 +53,7 @@ class RegistrationUI():
         h, w = self.img.shape
         if crop_method == 'manual':
             example_image = cv.imread(
-                os.path.join(MAIN_DIR, "ExampleFiles\\examples\\images\\corners_choice_example.jpg"), cv.IMREAD_COLOR)
+                os.path.join(MAIN_DIR, "ExampleFiles", "examples", "images", "corners_choice_example.jpg"), cv.IMREAD_COLOR)
 
             max_height = 800
             scale1 = 1.0
