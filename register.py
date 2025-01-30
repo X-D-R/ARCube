@@ -80,6 +80,8 @@ if __name__ == "__main__":
     register_to_model(object_corners_3d, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\book_3.jpg"),
                       os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\output_script_test.jpg"),
                       os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_test.npz"), 'corner', "SIFT")
+    model = RectangleModel.load(os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_test.npz"))
+    print(model)
 
     # or
     # parse_args_and_execute()
