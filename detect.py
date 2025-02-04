@@ -2,7 +2,7 @@ import argparse
 import os.path
 from src.detection.detection import Detector
 from src.tracking.frame import track_frame
-from src.utils.draw_functions import draw_contours_of_rectangle
+from src.utils.draw_functions import draw_contours_of_rectangle, visualize_matches
 
 MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
 
@@ -19,6 +19,8 @@ def parse_args_and_execute():
     parser.add_argument('--video', action='store_true', help="if you want to detect video,"
                                                                     "don't use if you want to detect photo")
     parser.add_argument('--output', type=str, required=True, help="Path to output image or video after detection")
+    parser.add_argument('--visualize_matches', action='store_true', help="Use if you want to visualize matches with the reference image,"
+                        "only if you want to detect photo")
 
     args = parser.parse_args()
 
@@ -33,8 +35,13 @@ def parse_args_and_execute():
         track_frame(detector, args.input, args.output)
     else:
         print('detecting object on photo')
-        img_points, src_pts, dst_pts = detector.detect_path(args.input)
+        img_points, src_pts, dst_pts, keypoints, matches = detector.detect_path(args.input)
         draw_contours_of_rectangle(args.input, args.output, img_points)
+
+        if args.visualize_matches:
+            print('visualizing matches with the reference image')
+            visualize_matches(detector.registration_params["img"], detector.registration_params["key_points_2d"],
+                              args.input, keypoints, matches)
 
 
 def set_detector(model_params_file: str, camera_params_file: str, use_flann: bool = True) -> Detector:
@@ -61,7 +68,7 @@ def detect_photo(detector: Detector, input_file: str, output_file: str):
     :param output_file: str, path to store the image with detected photo
     :return: 
     '''
-    img_points, src_pts, dst_pts = detector.detect_path(input_file)
+    img_points, src_pts, dst_pts, keypoints, matches = detector.detect_path(input_file)
     draw_contours_of_rectangle(input_file, output_file, img_points)
 
 
