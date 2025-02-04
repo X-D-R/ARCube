@@ -60,6 +60,7 @@ class RectangleModel():
         try:
             self.img = cv.imread(input_path, cv.IMREAD_GRAYSCALE)
             self.output_path = output_path
+            print(output_path)
             cv.imwrite(self.output_path, self.img)
         except Exception as e:
             raise ValueError(f"An error occurred while loading the image: {e}")
@@ -135,6 +136,7 @@ class RectangleModel():
 
         output_path = str(data['output_path'].item() if isinstance(data['output_path'], np.ndarray)
                           else data['output_path'])
+        print(output_path)
         new_object.upload_image(output_path, output_path)
         return new_object
 

@@ -80,6 +80,6 @@ if __name__ == "__main__":
     # or
     parse_args_and_execute()
     '''
-    python register.py --input_image "ARCube\\ExampleFiles\\new_book_check\\book_3.jpg" --output_image "ARCube\\ExampleFiles\\OutputFiles\\OutputImages\\output_script_test.jpg" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ARCube\\ExampleFiles\\ModelParams\\model_test.npz"
-    python register.py --input_image 'C:\\Users\\user\\Desktop\\ARCube\\ExampleFiles\\new_book_checkbook_3.jpg' --output_image "ARCube/ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ARCube/ExampleFiles/ModelParams/model_test.npz"
+    python register.py --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
+
     '''

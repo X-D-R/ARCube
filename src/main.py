@@ -94,6 +94,7 @@ if __name__ == "__main__":
     register_to_model(object_corners_3d, os.path.join(MAIN_DIR, "ExampleFiles\\new_book_check\\book_3.jpg"),
                       os.path.join(MAIN_DIR, "ExampleFiles\\OutputFiles\\OutputImages\\output_script_test.jpg"),
                       os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_script_test.npz"), "SIFT")
+
     set_model(os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_script_test.npz"),
               os.path.join(MAIN_DIR, "ExampleFiles\\ModelParams\\model_test.npz"))
 
