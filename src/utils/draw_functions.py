@@ -117,3 +117,42 @@ def split_video_to_frames_undistorted(video_path: str, output_folder_path: str, 
         dst = cv.undistort(frame, mtx, dist, None, newcameramtx)
         cv.imwrite(output_folder_path + 'frame_' + str(ind) + '.png', frame)
         ind += 1
+
+def visualize_matches(reference_image, reference_kp, image_path, image_kp, matches):
+    '''
+    Visualizes matches with the reference image.
+
+    :param reference_image: np.ndarray, reference image.
+    :param reference_kp: np.ndarray, reference image keypoints.
+    :param image_path: str, path to image.
+    :param image_kp: tuple, image keypoints.
+    :param matches: list, matches keypoints.
+    :return: None.
+    '''
+    img2 = cv.imread(image_path)
+    keypoints = []
+    for kp_dict in reference_kp:
+        x = kp_dict.get("pt")[0]
+        y = kp_dict.get("pt")[1]
+        size = kp_dict.get("size")
+        angle = kp_dict.get("angle")
+        response = kp_dict.get("response")
+        octave = kp_dict.get("octave")
+        class_id = kp_dict.get("class_id")
+        kp = cv.KeyPoint(x=x, y=y, size=size, angle=angle, response=response, octave=octave, class_id=class_id)
+        keypoints.append(kp)
+
+    arr_of_matches = []
+    for match in matches:
+        arr_of_matches.append([match])
+
+    result = cv.drawMatchesKnn(reference_image, keypoints, img2, image_kp, arr_of_matches, None,
+                               flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+    max_height = 800
+    h, w, channels = result.shape
+    if h > max_height:
+        scale = max_height / h
+        result = cv.resize(result, (int(w * scale), int(h * scale)))
+    cv.imshow("Visualizing of matches", result)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
