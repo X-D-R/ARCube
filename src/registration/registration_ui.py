@@ -39,7 +39,8 @@ class RegistrationUI():
         '''
         self.object_corners_3d = object_corners_3d
 
-    def select_object_corners(self, crop_method: str) -> None:
+    #def select_object_corners(self, crop_method: str) -> None:
+    def select_object_corners(self) -> None:
         '''
         Allows the user to select 2D object corners interactively or automatically.
 
@@ -51,54 +52,54 @@ class RegistrationUI():
 
         points_2d = []
         h, w = self.img.shape
-        if crop_method == 'manual':
-            example_image = cv.imread(
-                os.path.join(MAIN_DIR, "ExampleFiles", "examples", "images", "corners_choice_example.jpg"), cv.IMREAD_COLOR)
+        #if crop_method == 'manual':
+        example_image = cv.imread(
+            os.path.join(MAIN_DIR, "ExampleFiles", "examples", "images", "corners_choice_example.jpg"), cv.IMREAD_COLOR)
 
-            max_height = 800
-            scale1 = 1.0
-            h1, w1, channels = example_image.shape
+        max_height = 800
+        scale1 = 1.0
+        h1, w1, channels = example_image.shape
 
-            if h1 > max_height:
-                scale1 = max_height / h1
-                example_image = cv.resize(example_image, (int(w1 * scale1), int(h1 * scale1)))
+        if h1 > max_height:
+            scale1 = max_height / h1
+            example_image = cv.resize(example_image, (int(w1 * scale1), int(h1 * scale1)))
 
-            cv.imshow("Selection corners example", example_image)
-            cv.waitKey(0)
-            cv.destroyAllWindows()
+        cv.imshow("Selection corners example", example_image)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
-            max_height = 800
-            scale = 1.0
-            image = self.img
-            if h > max_height:
-                scale = max_height / h
-                image = cv.resize(image, (int(w * scale), int(h * scale)))
+        max_height = 800
+        scale = 1.0
+        image = self.img
+        if h > max_height:
+            scale = max_height / h
+            image = cv.resize(image, (int(w * scale), int(h * scale)))
 
-            def click_event(event, x, y, flags, param):
-                if event == cv.EVENT_LBUTTONDOWN and len(points_2d) < 4:
-                    points_2d.append([x, y])
-                    cv.circle(image, (x, y), 5, (0, 255, 0), -1)
-                    cv.imshow("Select Corners", image)
-                    print(f"Selected corner: ({x}, {y})")
+        def click_event(event, x, y, flags, param):
+            if event == cv.EVENT_LBUTTONDOWN and len(points_2d) < 4:
+                points_2d.append([x, y])
+                cv.circle(image, (x, y), 5, (0, 255, 0), -1)
+                cv.imshow("Select Corners", image)
+                print(f"Selected corner: ({x}, {y})")
 
-            print("Mark object corners 4 points:")
-            cv.imshow("Select Corners", image)
-            cv.setMouseCallback("Select Corners", click_event)
-            cv.waitKey(0)
-            cv.destroyAllWindows()
+        print("Mark object corners 4 points:")
+        cv.imshow("Select Corners", image)
+        cv.setMouseCallback("Select Corners", click_event)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
-            if len(points_2d) < 4:
-                raise ValueError("At least 4 points are required to define the object.")
-            if len(points_2d) != len(self.object_corners_3d):
-                raise ValueError("Length of 2d and 3d points must be equal! 4 points are required.")
-        elif crop_method == 'corner':
+        if len(points_2d) < 4:
+            raise ValueError("At least 4 points are required to define the object.")
+        if len(points_2d) != len(self.object_corners_3d):
+            raise ValueError("Length of 2d and 3d points must be equal! 4 points are required.")
+        '''elif crop_method == 'corner':
             points_2d.extend([[0, 0], [w, 0], [w, h], [0, h]])
         else:
-            raise ValueError("You chose wrong crop method, use 'manual' or 'corner' ")
+            raise ValueError("You chose wrong crop method, use 'manual' or 'corner' ")'''
         self.object_corners_2d = np.array(points_2d, dtype="float32")
         print(f"Selected corners: {self.object_corners_2d}")
 
-    def register_object_corners(self, img_path: str, object_corners_3d: np.ndarray, crop_method: str) -> tuple:
+    def register_object_corners(self, img_path: str, object_corners_3d: np.ndarray) -> tuple:
         '''
         Performs the full process of registering object corners, including loading the image,
         setting 3D corners, and selecting 2D corners interactively or automatically.
@@ -110,7 +111,7 @@ class RegistrationUI():
         '''
         self.upload_image(img_path)
         self.insert_object_corners_3d(object_corners_3d)
-        self.select_object_corners(crop_method)
+        self.select_object_corners()
         object_corners_2d = self.object_corners_2d
         object_corners_3d = self.object_corners_3d
         print("Registration object corners completed!")

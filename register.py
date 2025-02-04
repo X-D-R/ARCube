@@ -15,8 +15,8 @@ def parse_args_and_execute():
                                  help="Path to input image for registration")
     parser.add_argument('--output_image', type=str, required=True,
                                  help="Path to save the registered image")
-    parser.add_argument('--crop_method', type=str, choices=['manual', 'corner'], required=True,
-                                 help="Method for cropping the image ('manual' or 'corner')")
+    #parser.add_argument('--crop_method', type=str, choices=['manual', 'corner'], required=True,
+                                 #help="Method for cropping the image ('manual' or 'corner')")
     parser.add_argument('--points', type=float, nargs='+', required=True,
                                  help="List of 3D points (x1 y1 z1 x2 y2 z2 ... xn yn zn). "
                                       "Default is 4 points or 12 coordinates")
@@ -32,7 +32,9 @@ def parse_args_and_execute():
                          "the total count is a multiple of 3.")
 
     object_corners_3d = np.array(args.points, dtype="float32").reshape(-1, 3)
-    register_to_model(object_corners_3d, args.input_image, args.output_image, args.model_output, args.crop_method,
+    #register_to_model(object_corners_3d, args.input_image, args.output_image, args.model_output, args.crop_method,
+    #                  args.feature_method)
+    register_to_model(object_corners_3d, args.input_image, args.output_image, args.model_output,
                       args.feature_method)
     model = RectangleModel.load(args.model_output)
     print(model)
@@ -40,7 +42,7 @@ def parse_args_and_execute():
 
 
 def register_to_model(object_corners_3d: np.ndarray, input_image: str, output_image: str, register_output: str,
-                      crop_method: str = 'corner', feature_method: str = 'SIFT') -> None:
+                      feature_method: str = 'SIFT') -> None:
     '''
     This function register object on given image
     :param object_corners_3d: np.ndarray, 3d coordinate points of object, dtype == np.float32
@@ -55,7 +57,7 @@ def register_to_model(object_corners_3d: np.ndarray, input_image: str, output_im
         input_image=input_image,
         output_image=output_image,
         object_corners_3d=object_corners_3d,
-        crop_method=crop_method,
+        #crop_method=crop_method,
         feature_method=feature_method,
         model_output=register_output
     )
@@ -78,5 +80,6 @@ if __name__ == "__main__":
     # or
     parse_args_and_execute()
     '''
-    python register.py --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --crop_method "corner" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
+    python register.py --input_image "ARCube\\ExampleFiles\\new_book_check\\book_3.jpg" --output_image "ARCube\\ExampleFiles\\OutputFiles\\OutputImages\\output_script_test.jpg" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ARCube\\ExampleFiles\\ModelParams\\model_test.npz"
+    python register.py --input_image 'C:\\Users\\user\\Desktop\\ARCube\\ExampleFiles\\new_book_checkbook_3.jpg' --output_image "ARCube/ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ARCube/ExampleFiles/ModelParams/model_test.npz"
     '''

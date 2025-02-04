@@ -4,7 +4,7 @@ import numpy as np
 
 class Registration():
     def __init__(self, img: np.ndarray = None, key_points_2d: list = [], key_points_3d: list = [],
-                 des: np.ndarray = np.empty((0, 0)), method: str = '',
+                 des: np.ndarray = np.empty((0, 0)),
                  object_corners_2d: list = [], object_corners_3d: list = []):
         '''
         Initializes the Registration class with the provided parameters.
@@ -21,7 +21,7 @@ class Registration():
         self.key_points_2d = key_points_2d
         self.key_points_3d = key_points_3d
         self.des = des
-        self.method = method
+        #self.method = method
         self.object_corners_2d = object_corners_2d
         self.object_corners_3d = object_corners_3d
 

@@ -170,7 +170,7 @@ class RectangleModel():
 
 
 def register(input_image: str, output_image: str, object_corners_3d: np.ndarray,
-             crop_method: str, feature_method: str, model_output: str) -> None:
+              feature_method: str, model_output: str) -> None:
     '''
     Main registration function to detect, register, and save a rectangular model.
 
@@ -183,8 +183,9 @@ def register(input_image: str, output_image: str, object_corners_3d: np.ndarray,
     :return: None
     '''
     corners_model = RegistrationUI()
-    object_corners_2d, object_corners_3d = corners_model.register_object_corners(input_image, object_corners_3d,
-                                                                                 crop_method)
+    #object_corners_2d, object_corners_3d = corners_model.register_object_corners(input_image, object_corners_3d,
+                                                                                 #crop_method)
+    object_corners_2d, object_corners_3d = corners_model.register_object_corners(input_image, object_corners_3d)
 
     registration_model = Registration()
     key_points_2d, key_points_3d, des = registration_model.register_with_object_corners(input_image, feature_method,
