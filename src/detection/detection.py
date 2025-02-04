@@ -148,7 +148,7 @@ class Detector:
             print("Not enough matches are found - {}/{}".format(len(good), self.MIN_MATCH_COUNT))
             img_points, inliers_original, inliers_frame, good, mask = None, None, None, None, None
 
-        return img_points, inliers_original, inliers_frame
+        return img_points, inliers_original, inliers_frame, kp2, good
 
     def detect(self, image: np.ndarray, coeff_lowes: int = 0.7) -> (np.ndarray, np.ndarray, np.ndarray):
         '''
