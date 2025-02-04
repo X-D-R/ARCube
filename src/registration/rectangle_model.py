@@ -185,8 +185,6 @@ def register(input_image: str, output_image: str, object_corners_3d: np.ndarray,
     :return: None
     '''
     corners_model = RegistrationUI()
-    #object_corners_2d, object_corners_3d = corners_model.register_object_corners(input_image, object_corners_3d,
-                                                                                 #crop_method)
     object_corners_2d, object_corners_3d = corners_model.register_object_corners(input_image, object_corners_3d)
 
     registration_model = Registration()
