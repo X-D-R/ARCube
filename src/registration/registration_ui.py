@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 import os.path
 
-MAIN_DIR = os.path.split(os.path.split(os.path.abspath("main.py"))[0])[0]
+MAIN_DIR = os.path.split(os.path.abspath("main.py"))[0]
 
 
 class RegistrationUI():
@@ -77,7 +77,7 @@ class RegistrationUI():
 
         def click_event(event, x, y, flags, param):
             if event == cv.EVENT_LBUTTONDOWN and len(points_2d) < 4:
-                points_2d.append([x, y])
+                points_2d.append([x/scale, y/scale])
                 cv.circle(image, (x, y), 5, (0, 255, 0), -1)
                 cv.imshow("Select Corners", image)
                 print(f"Selected corner: ({x}, {y})")
