@@ -114,7 +114,7 @@ class Detector:
         self.get_model_params(model)
         self.instance_method(use_flann)
 
-    def detect_path(self, image_path: str, coeff_lowes: int = 0.7) -> (np.ndarray, np.ndarray, np.ndarray):
+    def detect_path(self, image_path: str, coeff_lowes: int = 0.7) -> (np.ndarray, np.ndarray, np.ndarray, list, list):
         '''
         This func to detect object on image
         :param image_path: str, path to image, there we need to detect object

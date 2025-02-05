@@ -17,9 +17,10 @@ def parse_args_and_execute():
                                  help="Path to save the registered image")
     #parser.add_argument('--crop_method', type=str, choices=['manual', 'corner'], required=True,
                                  #help="Method for cropping the image ('manual' or 'corner')")
-    parser.add_argument('--points', type=float, nargs='+', required=True,
-                                 help="List of 3D points (x1 y1 z1 x2 y2 z2 ... xn yn zn). "
-                                      "Default is 4 points or 12 coordinates")
+    parser.add_argument('--w', type=float, required=True,
+                        help="Width of object ")
+    parser.add_argument('--h', type=float, required=True,
+                        help="Height of object ")
     parser.add_argument('--feature_method', type=str, choices=["ORB", "KAZE", "AKAZE", "BRISK", "SIFT"],
                                  default="ORB", help="Feature detection method (default='ORB')")
     parser.add_argument('--model_output', type=str, required=True,
@@ -27,11 +28,13 @@ def parse_args_and_execute():
 
     args = parser.parse_args()
 
-    if args.points is None or len(args.points) % 3 != 0 or len(args.points) < 12:
-        raise ValueError("Provide 3D points as a flat list of coordinates (x1 y1 z1 ... xn yn zn), and ensure "
-                         "the total count is a multiple of 3.")
+    w, h = args.w, args.h
+    points = [0, 0, 0, w, 0, 0, w, h, 0, 0, h, 0]
 
-    object_corners_3d = np.array(args.points, dtype="float32").reshape(-1, 3)
+    if w is None or h is None:
+        raise ValueError("Provide w and h")
+
+    object_corners_3d = np.array(points, dtype="float32").reshape(-1, 3)
     #register_to_model(object_corners_3d, args.input_image, args.output_image, args.model_output, args.crop_method,
     #                  args.feature_method)
     register_to_model(object_corners_3d, args.input_image, args.output_image, args.model_output,
@@ -80,6 +83,6 @@ if __name__ == "__main__":
     # or
     parse_args_and_execute()
     '''
-    python register.py --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --points 0 0 0 0.14 0 0 0.14 0.21 0 0 0.21 0 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
+    python register.py --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --w 0.14 --h 0.21 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
 
     '''
