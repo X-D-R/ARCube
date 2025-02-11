@@ -1,11 +1,11 @@
 import cv2 as cv
 import numpy as np
-from src.detection.detection import Detector
 
 
 def draw_tracks(mask, frame, start_keypoints, end_keypoints):
     '''
     Draws lines (tracks) and circles (keypoints) on the frame for visualization of Lucas-Kanade optical flow.
+
     :param mask: np.ndarray, mask image for drawing purposes.
     :param frame: np.ndarray, video frame or image.
     :param start_keypoints: np.ndarray, array of start 2D keypoints.
@@ -121,6 +121,7 @@ def split_video_to_frames_undistorted(video_path: str, output_folder_path: str, 
 def visualize_matches(reference_image, reference_kp, image, image_kp, matches):
     '''
     Visualizes matches with the reference image.
+
     :param reference_image: np.ndarray, reference image.
     :param reference_kp: np.ndarray, reference image keypoints.
     :param image: np.ndarray, image for matching.
@@ -157,6 +158,7 @@ def visualize_matches(reference_image, reference_kp, image, image_kp, matches):
 def visualize_matches_on_photo(reference_image, reference_kp, image_path, image_kp, matches):
     '''
     Visualizes matches with the reference image on photo.
+
     :param reference_image: np.ndarray, reference image.
     :param reference_kp: np.ndarray, reference image keypoints.
     :param image_path: str, path of image.
