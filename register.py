@@ -67,20 +67,6 @@ def register_to_model(object_corners_3d: np.ndarray, input_image: str, output_im
 
 
 if __name__ == "__main__":
-    # example of the object registration
-    # object_corners_3d = np.array([
-    #     [0, 0, 0],  # Top-left
-    #     [0.14, 0, 0],  # Top-right
-    #     [0.14, 0.21, 0],  # Bottom-right
-    #     [0, 0.21, 0],  # Bottom-left
-    #
-    # ], dtype="float32")  # example of object_corners_3d
-    # print(os.path.join(MAIN_DIR, "ExampleFiles", "new_book_check", "book_3.jpg"))
-    # register_to_model(object_corners_3d, os.path.join(MAIN_DIR, "ExampleFiles", "new_book_check", "book_3.jpg"),
-    #                   os.path.join(MAIN_DIR, "ExampleFiles", "OutputFiles", "OutputImages", "output_script_test.jpg"),
-    #                   os.path.join(MAIN_DIR, "ExampleFiles", "ModelParams", "model_test.npz"), 'corner', "SIFT")
-
-    # or
     parse_args_and_execute()
     '''
     python register.py --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --w 0.14 --h 0.21 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
