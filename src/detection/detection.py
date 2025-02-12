@@ -172,6 +172,7 @@ class Detector:
             src_pts = np.float32([[kp1[m.queryIdx][0], kp1[m.queryIdx][1], kp1[m.queryIdx][2]] for m in good]).reshape(
                 -1, 1, 3)
             dst_pts = np.float32([[kp2[m.trainIdx].pt[0], kp2[m.trainIdx].pt[1]] for m in good]).reshape(-1, 1, 2)
+            M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
             mtx, dist = self.camera_params["mtx"], self.camera_params["dist"]
             if self.previous_rvec is None or self.previous_tvec is None:
                 valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist)
@@ -194,7 +195,7 @@ class Detector:
             print("Not enough matches are found - {}/{}".format(len(good), self.MIN_MATCH_COUNT))
             img_points, inliers_original, inliers_frame = None, None, None
 
-        return img_points, inliers_original, inliers_frame, kp2, good
+        return img_points, inliers_original, inliers_frame, kp2, good, M, mask
 
     def _lowes_ratio_test(self, matches, coefficient=0.7) -> list:
         '''

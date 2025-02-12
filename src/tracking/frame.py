@@ -89,7 +89,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
         print("Failed to read the first frame.")
         exit()
 
-    img_pts, kpoints_3d, kpoints_2d, kp, matches = detector.detect(previous_frame)
+    img_pts, kpoints_3d, kpoints_2d, kp, matches, M, mask = detector.detect(previous_frame)
     mask = np.zeros_like(previous_frame)
     Images = []
     Images_matching = []
@@ -101,7 +101,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
             break
 
         if count % track_length == 0:
-            img_pts_detected, kpoints_3d_detected, kpoints_2d_detected, kp_1, matches_1 = detector.detect(previous_frame)
+            img_pts_detected, kpoints_3d_detected, kpoints_2d_detected, kp_1, matches_1, M_1, mask_1 = detector.detect(previous_frame)
 
             # handling case of bad detection
             if img_pts_detected is None:
