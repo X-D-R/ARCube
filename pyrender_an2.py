@@ -57,6 +57,7 @@ color = cv.cvtColor(color, cv.COLOR_RGB2BGR)
 alpha = 0.5
 result = cv.addWeighted(image, 1 - alpha, color, alpha, 0)
 
+
 max_height = 800
 h, w, channels = result.shape
 if h > max_height:
