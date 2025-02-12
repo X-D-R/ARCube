@@ -4,6 +4,7 @@ import pyrender
 import cv2 as cv
 from src.tracking.frame import detect_pose
 from src.registration.rectangle_model import RectangleModel
+from src.detection.detection import Detector
 
 box_trimesh = trimesh.load('E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\box.obj')
 
@@ -17,17 +18,22 @@ material = pyrender.MetallicRoughnessMaterial(
 mesh = pyrender.Mesh.from_trimesh(box_trimesh, material=material)
 scene.add(mesh)
 
-model = RectangleModel.load('E:\\pycharm projects\\ARC\\ExampleFiles\\ModelParams\\model_test.npz')
-kpoints_2D = model.object_corners_2d
-kpoints_3D = model.object_corners_3d
+image = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\new_book_check\\book_3.jpg')
+h, w, channels = image.shape
 
-path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\CameraParams\\CameraParams.npz'
-if path.endswith('.npz'):
-    with np.load(path) as file:
+cam_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\CameraParams\\CameraParams.npz'
+if cam_path.endswith('.npz'):
+    with np.load(cam_path) as file:
         cameraMatrix = file['cameraMatrix']
         distCoeffs = file['dist']
 
-valid, rvecs, tvec = detect_pose(kpoints_2D, kpoints_3D, cameraMatrix, distCoeffs)
+model_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\ModelParams\\model_test.npz'
+detector = Detector()
+detector.set_detector(cam_path, model_path)
+
+img_pts, kpoints_3d, kpoints_2d = detector.detect(image)
+
+valid, rvecs, tvec = detect_pose(kpoints_2d, kpoints_3d, cameraMatrix, distCoeffs)
 
 camera_pose = np.eye(4)
 camera_pose[:3, :3] = rvecs
@@ -36,11 +42,6 @@ camera_pose[:3, 3] = tvec.ravel()
 camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
 scene.add(camera, pose=camera_pose)
 viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
-
-# image = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\new_book_check.png')
-image = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\new_book_check\\book_3.jpg')
-
-h, w, channels = image.shape
 
 r = pyrender.OffscreenRenderer(viewport_width=w, viewport_height=h)
 color, depth = r.render(scene, flags=pyrender.RenderFlags.RGBA)
