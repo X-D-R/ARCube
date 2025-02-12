@@ -35,7 +35,7 @@ camera_pose[:3, 3] = tvec.ravel()
 
 camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
 scene.add(camera, pose=camera_pose)
-# viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
+viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
 
 # image = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\new_book_check.png')
 image = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\new_book_check\\book_3.jpg')
