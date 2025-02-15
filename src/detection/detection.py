@@ -1,4 +1,3 @@
-import cv2
 import cv2 as cv
 import numpy as np
 from src.registration.rectangle_model import RectangleModel
@@ -108,12 +107,12 @@ class Detector:
     def set_detector(self, camera_path: str, model_path: str, use_flann: bool = True) -> None:
         self.load_camera_params(camera_path)
         self.load_model_params(model_path)
-        self.instance_method(use_flann=True)
+        self.instance_method(use_flann)
 
     def set_detector_by_model(self, camera_path: str, model: RectangleModel, use_flann: bool = True) -> None:
         self.load_camera_params(camera_path)
         self.get_model_params(model)
-        self.instance_method(use_flann=True)
+        self.instance_method(use_flann)
 
     def detect_path(self, image_path: str, coeff_lowes: int = 0.7) -> (np.ndarray, np.ndarray, np.ndarray, list, list):
         '''
@@ -159,24 +158,21 @@ class Detector:
         :return: (np.ndarray, np.ndarray, np.ndarray, list, list), result vertices of object, inliers on source image, inliers on that image, good matches, mask for debug
         '''
         src_pts, dst_pts = np.float32(), np.float32()
-        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         if image is None:
             raise ValueError("There is no image on this path")
         kp1, des1 = self.registration_params["key_points_3d"], self.registration_params[
             "des"]  # kp should be in 3D real coords
         kp2, des2 = self.descriptor.detectAndCompute(image, None)
         if not self.use_flann:
-            #matches = self.matcher.match(des1, des2)
-            matches = bf.match(des1, des2)
-            good = sorted(matches, key=lambda x: x.distance)
+            matches = self.matcher.match(des1, des2)
         else:
             matches = self.matcher.knnMatch(des1, des2, 2)
-            good = self._lowes_ratio_test(matches, coeff_lowes)
+        good = self._lowes_ratio_test(matches, coeff_lowes)
         if len(good) > self.MIN_MATCH_COUNT:
             src_pts = np.float32([[kp1[m.queryIdx][0], kp1[m.queryIdx][1], kp1[m.queryIdx][2]] for m in good]).reshape(
                 -1, 1, 3)
             dst_pts = np.float32([[kp2[m.trainIdx].pt[0], kp2[m.trainIdx].pt[1]] for m in good]).reshape(-1, 1, 2)
-            M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 5.0)
+            M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
             mtx, dist = self.camera_params["mtx"], self.camera_params["dist"]
             if self.previous_rvec is None or self.previous_tvec is None:
                 valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist)
@@ -193,13 +189,13 @@ class Detector:
                 inliers_original, inliers_frame = src_pts[mask], dst_pts[mask]
             else:
                 print("No good keypoints")
-                img_points, inliers_original, inliers_frame, M, mask = None, None, None, M, None
+                img_points, inliers_original, inliers_frame = None, None, None
 
         else:
             print("Not enough matches are found - {}/{}".format(len(good), self.MIN_MATCH_COUNT))
-            img_points, inliers_original, inliers_frame, M, mask = None, None, None, None, None
+            img_points, inliers_original, inliers_frame = None, None, None
 
-        return img_points, inliers_original, inliers_frame, M, mask
+        return img_points, inliers_original, inliers_frame, kp2, good, M, mask
 
     def _lowes_ratio_test(self, matches, coefficient=0.7) -> list:
         '''

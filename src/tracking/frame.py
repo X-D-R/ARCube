@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 from src.tracking.klt_tracker_class import KLT_Tracker
 from src.detection.detection import detect_pose, Detector
+from src.utils.draw_functions import visualize_matches
 
 
 class FrameRegistration:
@@ -60,7 +61,7 @@ class FrameRegistration:
 
 
 def track_frame(detector: Detector, video_path: str = None, output_path: str = None, track_length: int = 50,
-                fps: int = 30, color: tuple = (255, 0, 0)) -> None:
+                fps: int = 30, color: tuple = (255, 0, 0), visualizing_matches: bool = False) -> None:
     '''
     This func tracks object on video (with detection every track_length) and save video to output
     :param detector: Detector, detector, that used to detect object
@@ -69,9 +70,11 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
     :param track_length: int, length of frames that should be tracked until new detection
     :param fps: int, frame per second (optional), 30 fps is usually used
     :param color: tuple, color of frame in BGR color scheme (255, 0 , 0) - Blue
+    :param visualizing_matches: bool, whether to visualize matches with reference image
     :return: None
     '''
-    img = detector.registration_params['img']
+    reference_image = detector.registration_params['img']
+    reference_kp = detector.registration_params["key_points_2d"]
     cameraMatrix, distCoeffs = detector.camera_params['mtx'], detector.camera_params['dist']
 
     cap = cv.VideoCapture(video_path)  # load video file
@@ -86,9 +89,10 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
         print("Failed to read the first frame.")
         exit()
 
-    img_pts, kpoints_3d, kpoints_2d = detector.detect(img)
+    img_pts, kpoints_3d, kpoints_2d, kp, matches, M, mask = detector.detect(previous_frame)
     mask = np.zeros_like(previous_frame)
     Images = []
+    Images_matching = []
     count = 1
     imgSize = None
     while True:
@@ -97,7 +101,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
             break
 
         if count % track_length == 0:
-            img_pts_detected, kpoints_3d_detected, kpoints_2d_detected = detector.detect(previous_frame)
+            img_pts_detected, kpoints_3d_detected, kpoints_2d_detected, kp_1, matches_1, M_1, mask_1 = detector.detect(previous_frame)
 
             # handling case of bad detection
             if img_pts_detected is None:
@@ -116,7 +120,11 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
                     previous_frame = frame.copy()
                 continue
             img_pts, kpoints_3d, kpoints_2d = img_pts_detected, kpoints_3d_detected, kpoints_2d_detected
+            kp, matches = kp_1, matches_1
             mask = np.zeros_like(previous_frame)
+
+        if visualizing_matches:
+            Images_matching.append(visualize_matches(reference_image, reference_kp, frame, kp, matches))
 
         # track new frame
         good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d, kpoints_3d)
@@ -160,5 +168,12 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
         cv.imshow("Detected video. Press 'q' to close", img)
         if cv.waitKey(25) & 0xFF == ord('q'):
             break
+
+    if visualizing_matches:
+        for i in range(len(Images_matching)):
+            img = Images_matching[i]
+            cv.imshow("Visualizing of matches. Press 'q' to close", img)
+            if cv.waitKey(25) & 0xFF == ord('q'):
+                break
 
     cv.destroyAllWindows()

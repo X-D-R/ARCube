@@ -118,18 +118,17 @@ def split_video_to_frames_undistorted(video_path: str, output_folder_path: str, 
         cv.imwrite(output_folder_path + 'frame_' + str(ind) + '.png', frame)
         ind += 1
 
-def visualize_matches(reference_image, reference_kp, image_path, image_kp, matches):
+def visualize_matches(reference_image, reference_kp, image, image_kp, matches):
     '''
     Visualizes matches with the reference image.
 
     :param reference_image: np.ndarray, reference image.
     :param reference_kp: np.ndarray, reference image keypoints.
-    :param image_path: str, path to image.
+    :param image: np.ndarray, image for matching.
     :param image_kp: tuple, image keypoints.
     :param matches: list, matches keypoints.
-    :return: None.
+    :return: np.ndarray, image with visualizing of matches with the reference image.
     '''
-    img2 = cv.imread(image_path)
     keypoints = []
     for kp_dict in reference_kp:
         x = kp_dict.get("pt")[0]
@@ -146,13 +145,29 @@ def visualize_matches(reference_image, reference_kp, image_path, image_kp, match
     for match in matches:
         arr_of_matches.append([match])
 
-    result = cv.drawMatchesKnn(reference_image, keypoints, img2, image_kp, arr_of_matches, None,
+    result = cv.drawMatchesKnn(reference_image, keypoints, image, image_kp, arr_of_matches, None,
                                flags=cv.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
     max_height = 800
     h, w, channels = result.shape
     if h > max_height:
         scale = max_height / h
         result = cv.resize(result, (int(w * scale), int(h * scale)))
+
+    return result
+
+def visualize_matches_on_photo(reference_image, reference_kp, image_path, image_kp, matches):
+    '''
+    Visualizes matches with the reference image on photo.
+
+    :param reference_image: np.ndarray, reference image.
+    :param reference_kp: np.ndarray, reference image keypoints.
+    :param image_path: str, path of image.
+    :param image_kp: tuple, image keypoints.
+    :param matches: list, matches keypoints.
+    :return: None
+    '''
+    img2 = cv.imread(image_path)
+    result = visualize_matches(reference_image, reference_kp, img2, image_kp, matches)
     cv.imshow("Visualizing of matches", result)
     cv.waitKey(0)
     cv.destroyAllWindows()

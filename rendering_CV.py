@@ -100,7 +100,6 @@ class render_CV:
         for face in obj.faces:
             face_vertices = face[0]
             points = np.array([vertices[vertex - 1] for vertex in face_vertices])
-            print(points, scale_matrix)
             points = np.dot(points, scale_matrix)
             #points = np.array([[p[0] + w / 2, p[1] + h / 2, p[2]] for p in points])
             dst = cv2.perspectiveTransform(points.reshape(-1, 1, 3), projection)
@@ -127,13 +126,10 @@ def main():
     camera_matrix = detector.camera_params['mtx']
     cap = cv2.VideoCapture("ExampleFiles/new_book_check/new_book_video_main.mp4")
     i = detector.registration_params['img']
-    coord = detector.registration_params['object_corners_2d']
-    print(coord)
-    w = 2646.983642578125
-    h = 4040.734619140625
+    h,w, c = i.shape
     Images = []
 
-    obj = OBJ(os.path.join(MAIN_DIR, 'box_2.obj'), swapyz=True)
+    obj = OBJ(os.path.join(MAIN_DIR, 'box.obj'), swapyz=True)
 
     while True:
         # read the current frame
@@ -141,14 +137,11 @@ def main():
         if not ret:
             print("Unable to capture video")
             return
-        img_points, inliers_original, inliers_frame, homography, mask = detector.detect(frame)
-
+        img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
 
         #pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1, 2)
-        #pts = np.float32([[0, h - 1], [w - 1, h - 1], [w - 1, 0], [0, 0]]).reshape(-1, 1, 2)
-        #dst = cv2.perspectiveTransform(pts, homography)
-        #dst = cv2.warpPerspective()
 
+        #dst = cv2.perspectiveTransform(pts, homography)
 
         frame = cv2.polylines(frame, [np.int32(img_points)], True, 255, 3, cv2.LINE_AA)
         #if homography is not None:
@@ -176,10 +169,8 @@ def main():
         if (cv2.waitKey(1) & 0xFF) == ord('q'):
             break
     cap.release()
+
     cv2.destroyAllWindows()
-    return 0
-
-
 
 
 
