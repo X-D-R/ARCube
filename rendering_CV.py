@@ -132,7 +132,7 @@ def main():
             break
         Images.append(frame)
 
-    #height, width, channels = Images[0].size
+
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video = cv2.VideoWriter('result.mp4', fourcc, 30, (width, height))
 
