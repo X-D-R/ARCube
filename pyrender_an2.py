@@ -45,6 +45,8 @@ class RenderPyrender:
 
         pose_cam = np.eye(4)
         pose_cam[:3, 3] = np.array([0, 0, 0])
+        pose_cam[1, 1] = 1
+        pose_cam[2, 2] = 1
         print(pose_cam)
 
         cam_node = pyrender.Node(camera=cam, matrix=pose_cam)
