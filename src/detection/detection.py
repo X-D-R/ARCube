@@ -104,8 +104,11 @@ class Detector:
             "feature_method": model.feature_method
         }
 
-    def set_detector(self, camera_path: str, model_path: str, use_flann: bool = True) -> None:
-        self.load_camera_params(camera_path)
+    def set_detector(self, camera_path: str, model_path: str, use_flann: bool = True, camera_params_approximate: dict = {}) -> None:
+        if camera_path is None:
+            self.camera_params = camera_params_approximate
+        else:
+            self.load_camera_params(camera_path)
         self.load_model_params(model_path)
         self.instance_method(use_flann)
 
