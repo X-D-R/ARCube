@@ -1,116 +1,83 @@
-import numpy as np
-import trimesh
 import pyrender
+import trimesh
+import numpy as np
 import cv2 as cv
-from src.tracking.frame import detect_pose
-from src.registration.rectangle_model import RectangleModel
-from src.detection.detection import Detector
+from src.detection.detection import detect_pose
+from detect import set_detector
 
-print('loading 3d model')
-box_trimesh = trimesh.load('E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\box_2.obj')
-scene = pyrender.Scene()
-material = pyrender.MetallicRoughnessMaterial(
-    baseColorFactor=[1.0, 1.0, 1.0, 0.3],
-    metallicFactor=0.0,
-    roughnessFactor=0.5
-)
-mesh = pyrender.Mesh.from_trimesh(box_trimesh, material=material)
-scene.add(mesh)
 
-print('detecting pose')
-image = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\new_book_check\\book_3.jpg')
-h, w, channels = image.shape
+class RenderPyrender:
+    def __init__(self, w=640, h=480):
+        self.scene = pyrender.Scene()
+        self.renderer = pyrender.OffscreenRenderer(viewport_width=w, viewport_height=h)
+        self.mesh_node = None
+    def load_obj(self, obj_path):
+        """ Load 3D-model """
+        mesh = trimesh.load_mesh(obj_path)
+        mesh = pyrender.Mesh.from_trimesh(mesh)
+        self.mesh_node = pyrender.Node(mesh=mesh)
+        self.scene.add_node(self.mesh_node)
+
+    def render(self, rvecs, tvecs, camera_matrix):
+        """ Render 3D-object using pose """
+        if self.mesh_node is None:
+            raise ValueError("3D-model is not loaded!")
+
+        pose_obj = np.eye(4)
+        pose_obj[:3, :3] = rvecs
+        pose_obj[:3, 3] = tvecs.flatten()
+        self.scene.set_pose(self.mesh_node, pose_obj)
+        print(pose_obj)
+
+        fx, fy = camera_matrix[0, 0], camera_matrix[1, 1]
+        cx, cy = camera_matrix[0, 2], camera_matrix[1, 2]
+        cam = pyrender.IntrinsicsCamera(fx, fy, cx, cy)
+        # cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
+
+        pose_cam = np.eye(4)
+        pose_cam[:3, 3] = np.array([0, 0, 0.21])
+        print(pose_cam)
+
+        cam_node = pyrender.Node(camera=cam, matrix=pose_cam)
+        self.scene.add_node(cam_node)
+
+        viewer = pyrender.Viewer(self.scene, use_raymond_lighting=True)
+
+        color, _ = self.renderer.render(self.scene)
+        self.scene.remove_node(cam_node)
+
+        return color
+
 
 cam_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\CameraParams\\CameraParams.npz'
-if cam_path.endswith('.npz'):
-    with np.load(cam_path) as file:
-        cameraMatrix = file['cameraMatrix']
-        distCoeffs = file['dist']
-
 model_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\ModelParams\\model_test.npz'
-detector = Detector()
-detector.set_detector(cam_path, model_path)
+frame = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\new_book_check\\book_3.jpg')
+obj_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\box.obj'
 
-img_pts, kpoints_3d, kpoints_2d = detector.detect(image)
-valid, rvecs, tvec = detect_pose(kpoints_2d, kpoints_3d, cameraMatrix, distCoeffs)
+detector = set_detector(model_path, cam_path)
+camera_matrix = detector.camera_params['mtx']
+dist_coeffs = detector.camera_params['dist']
 
+rend = RenderPyrender(frame.shape[1], frame.shape[0])
+rend.load_obj(obj_path)
 
-camera_pose = np.eye(4)
-camera_pose[:3, :3] = rvecs
-camera_pose[:3, 3] = tvec.ravel()
-print(camera_pose)
+img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
 
-# X
-correction_rotation = np.array([
-    [1,  0,  0,  0],
-    [0,  0, -1,  0],
-    [0,  1,  0,  0],
-    [0,  0,  0,  1]
-])
-camera_pose = correction_rotation @ camera_pose
-# Y
-correction_rotation = np.array([
-    [0,  0,  1,  0],
-    [0,  1,  0,  0],
-    [-1, 0,  0,  0],
-    [0,  0,  0,  1]
-])
-camera_pose = correction_rotation @ camera_pose
-# # Z
-# correction_rotation = np.array([
-#     [0, -1,  0,  0],
-#     [1,  0,  0,  0],
-#     [0,  0,  1,  0],
-#     [0,  0,  0,  1]
-# ])
-camera_pose = correction_rotation @ camera_pose
-print(camera_pose)
-
-print('showing model')
-camera = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
-scene.add(camera, pose=camera_pose)
-
-
-# light_positions = [
-#     [1, 1, 1],   # Сверху справа
-#     [-1, 1, 1],  # Сверху слева
-#     [1, -1, 1],  # Снизу справа
-#     [-1, -1, 1], # Снизу слева
-#     [1, 1, -1],  # Сзади справа
-#     [-1, 1, -1], # Сзади слева
-# ]
-#
-# for pos in light_positions:
-#     light = pyrender.PointLight(color=[1.0, 1.0, 1.0], intensity=2.0)
-#     light_pose = np.eye(4)
-#     light_pose[:3, 3] = pos
-#     scene.add(light, pose=light_pose)
-
-viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
-r = pyrender.OffscreenRenderer(viewport_width=w, viewport_height=h)
-color, depth = r.render(scene, flags=pyrender.RenderFlags.RGBA)
-
-print('showing results')
-# 1 way
-# alpha_mask = color[:, :, 3] / 255.0
-# alpha_mask = np.repeat(alpha_mask[:, :, np.newaxis], 3, axis=2)
-# color = color[:, :, :3]
-# result = image.copy()
-# result[alpha_mask > 0] = (color * alpha_mask + result * (1 - alpha_mask))[alpha_mask > 0]
-
-# 2 way
-color = cv.cvtColor(color, cv.COLOR_RGB2BGR)
-alpha = 0.5
-result = cv.addWeighted(image, 1 - alpha, color, alpha, 0)
-
+if img_points is not None:
+    valid, rvecs, tvec = detect_pose(inliers_frame, inliers_original, camera_matrix, dist_coeffs)
+    if valid:
+        rendered = rend.render(rvecs, tvec, camera_matrix)
+        rendered = cv.resize(rendered, (frame.shape[1], frame.shape[0]))
+        rendered = cv.cvtColor(rendered, cv.COLOR_RGB2BGR)
+        alpha = 0.4
+        frame = cv.addWeighted(frame, 1 - alpha, rendered, alpha, 0)
 
 max_height = 800
-h, w, channels = result.shape
+h, w, channels = frame.shape
 if h > max_height:
     scale = max_height / h
-    result = cv.resize(result, (int(w * scale), int(h * scale)))
+    result = cv.resize(frame, (int(w * scale), int(h * scale)))
 
 cv.imshow("Press enter to close", result)
 cv.waitKey(0)
 cv.destroyAllWindows()
-
