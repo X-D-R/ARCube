@@ -26,13 +26,13 @@ class RenderPyrender:
         pose_obj = np.eye(4)
         pose_obj[:3, :3] = rvecs
         pose_obj[:3, 3] = tvecs.flatten()
-        correction_rotation = np.array([
-            [1, 0, 0, 0],
-            [0, 0, -1, 0],
-            [0, 1, 0, 0],
-            [0, 0, 0, 1]
-        ])
-        pose_obj = correction_rotation @ pose_obj
+        # correction_rotation = np.array([
+        #     [1, 0, 0, 0],
+        #     [0, 0, -1, 0],
+        #     [0, 1, 0, 0],
+        #     [0, 0, 0, 1]
+        # ])
+        # pose_obj = correction_rotation @ pose_obj
         print(pose_obj)
 
         mesh_node = pyrender.Node(mesh=self.mesh, matrix=pose_obj)
@@ -44,9 +44,9 @@ class RenderPyrender:
         # cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
 
         pose_cam = np.eye(4)
-        pose_cam[:3, 3] = np.array([0, 0, 0])
-        pose_cam[1, 1] = 1
-        pose_cam[2, 2] = 1
+        pose_cam[:3, 3] = np.array([0, 0, -0.21])
+        pose_cam[1, 1] = -1
+        pose_cam[2, 2] = -1
         print(pose_cam)
 
         cam_node = pyrender.Node(camera=cam, matrix=pose_cam)
@@ -64,7 +64,7 @@ print('setting detector')
 cam_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\CameraParams\\CameraParams.npz'
 model_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\ModelParams\\model_script_test.npz'
 frame = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\new_book_check\\book_3.jpg')
-# frame = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\new_book_check.png')
+frame = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\new_book_check.png')
 obj_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\box.obj'
 
 detector = set_detector(model_path, cam_path)
