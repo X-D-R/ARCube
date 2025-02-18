@@ -26,7 +26,16 @@ class RegistrationUI():
         :return: None
         '''
         try:
-            self.img = cv.imread(input_path, cv.IMREAD_GRAYSCALE)
+            image = cv.imread(input_path, cv.IMREAD_GRAYSCALE)
+            '''image = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+            kernel = np.array([[0, -1, 0],
+                               [-1, 5, -1],
+                               [0, -1, 0]])
+            image = cv.filter2D(image, -1, kernel)
+            image = cv.medianBlur(image, 5)
+            image = cv.equalizeHist(image)
+            _, image = cv.threshold(image, 127, 255, cv.THRESH_BINARY)'''
+            self.img = image
         except Exception as e:
             raise ValueError(f"An error occurred while loading the image: {e}")
 
@@ -56,7 +65,7 @@ class RegistrationUI():
         example_image = cv.imread(
             os.path.join(MAIN_DIR, "ExampleFiles", "examples", "images", "corners_choice_example.jpg"), cv.IMREAD_COLOR)
 
-        max_height = 800
+        max_height = 600
         scale1 = 1.0
         h1, w1, channels = example_image.shape
 
@@ -68,7 +77,7 @@ class RegistrationUI():
         cv.waitKey(0)
         cv.destroyAllWindows()
 
-        max_height = 800
+        max_height = 600
         scale = 1.0
         image = self.img
         if h > max_height:
@@ -80,13 +89,14 @@ class RegistrationUI():
                 points_2d.append([x/scale, y/scale])
                 cv.circle(image, (x, y), 5, (0, 255, 0), -1)
                 cv.imshow("Select Corners", image)
-                print(f"Selected corner: ({x}, {y})")
+                print(f"Selected corner: ({x/scale}, {y/scale})")
 
         print("Mark object corners 4 points:")
         cv.imshow("Select Corners", image)
         cv.setMouseCallback("Select Corners", click_event)
         cv.waitKey(0)
         cv.destroyAllWindows()
+        #points_2d = [[0, 0], [w, 0], [w, h], [0, h]]
 
         if len(points_2d) < 4:
             raise ValueError("At least 4 points are required to define the object.")
