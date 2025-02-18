@@ -21,6 +21,7 @@ def parse_args_and_execute():
     parser.add_argument('--video', action='store_true', help="if you want to detect video,"
                                                                     "don't use if you want to detect photo")
     parser.add_argument('--output', type=str, required=True, help="Path to output image or video after detection")
+    parser.add_argument('--use_tracker', action='store_true', help="Use if you want to use tracking")
     parser.add_argument('--visualize_matches', action='store_true', help="Use if you want to visualize matches with the reference image")
 
     args = parser.parse_args()
@@ -48,6 +49,7 @@ def parse_args_and_execute():
 
     if args.video:
         print('detecting object on video')
+        track_length = 50 if args.use_tracker else 1
 
         if args.visualize_matches:
             print('visualizing matches with the reference image')
