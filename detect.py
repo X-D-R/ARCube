@@ -2,7 +2,7 @@ import argparse
 import os.path
 from src.detection.detection import Detector
 from src.tracking.frame import track_frame
-from src.utils.draw_functions import draw_contours_of_rectangle, visualize_matches
+from src.utils.draw_functions import draw_contours_of_rectangle, visualize_matches_on_photo
 
 MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
 
@@ -19,8 +19,7 @@ def parse_args_and_execute():
     parser.add_argument('--video', action='store_true', help="if you want to detect video,"
                                                                     "don't use if you want to detect photo")
     parser.add_argument('--output', type=str, required=True, help="Path to output image or video after detection")
-    parser.add_argument('--visualize_matches', action='store_true', help="Use if you want to visualize matches with the reference image,"
-                        "only if you want to detect photo")
+    parser.add_argument('--visualize_matches', action='store_true', help="Use if you want to visualize matches with the reference image")
 
     args = parser.parse_args()
 
@@ -32,7 +31,13 @@ def parse_args_and_execute():
 
     if args.video:
         print('detecting object on video')
-        track_frame(detector, args.input, args.output)
+
+        if args.visualize_matches:
+            print('visualizing matches with the reference image')
+            track_frame(detector, args.input, args.output, visualizing_matches=True)
+        else:
+            track_frame(detector, args.input, args.output)
+
     else:
         print('detecting object on photo')
         img_points, src_pts, dst_pts, keypoints, matches = detector.detect_path(args.input)
@@ -40,7 +45,7 @@ def parse_args_and_execute():
 
         if args.visualize_matches:
             print('visualizing matches with the reference image')
-            visualize_matches(detector.registration_params["img"], detector.registration_params["key_points_2d"],
+            visualize_matches_on_photo(detector.registration_params["img"], detector.registration_params["key_points_2d"],
                               args.input, keypoints, matches)
 
 
