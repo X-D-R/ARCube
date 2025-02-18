@@ -105,23 +105,11 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
 
             # handling case of bad detection
             if img_pts_detected is None:
-                print("Bad detection of object, replaced by tracking")
-                good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d,
-                                                                             kpoints_3d)
-                object_corners_2d = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs,
-                                                             object_corners_3d)
-                frame = cv.polylines(frame, [object_corners_2d.astype('int32')], True, color, 3, cv.LINE_AA)
-                img = cv.add(frame, mask)
-                imgSize = img.shape
-                Images.append(img)
-                # let tracking work extra 5 frames
-                count = track_length - 5
-                if len(frame) > 0:
-                    previous_frame = frame.copy()
-                continue
-            img_pts, kpoints_3d, kpoints_2d = img_pts_detected, kpoints_3d_detected, kpoints_2d_detected
-            kp, matches = kp_1, matches_1
-            mask = np.zeros_like(previous_frame)
+                print("Bad detection of object, keeping old parameters")
+            else:
+                img_pts, kpoints_3d, kpoints_2d = img_pts_detected, kpoints_3d_detected, kpoints_2d_detected
+                kp, matches = kp_1, matches_1
+                mask = np.zeros_like(previous_frame)
 
         if visualizing_matches:
             Images_matching.append(visualize_matches(reference_image, reference_kp, frame, kp, matches))
