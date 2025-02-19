@@ -3,7 +3,7 @@ import os.path
 import numpy as np
 import cv2 as cv
 from src.detection.detection import Detector
-from src.tracking.frame import track_frame
+from src.tracking.frame import track_frame, track_frame_cam
 from src.utils.draw_functions import draw_contours_of_rectangle, visualize_matches_on_photo
 
 MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
@@ -17,11 +17,12 @@ def parse_args_and_execute():
     parser.add_argument('--model', type=str, help="Path to the saved model file")
     parser.add_argument('--demo', action='store_true', help="Use the default object model from the repository")
     parser.add_argument('--camera_params', type=str, required=False, help="Path to camera parameters file")
-    parser.add_argument('--input', type=str, required=True, help="Path to input image or video for detection")
+    parser.add_argument('--input', type=str, required=False, help="Path to input image or video for detection")
     parser.add_argument('--video', action='store_true', help="if you want to detect video,"
                                                                     "don't use if you want to detect photo")
     parser.add_argument('--output', type=str, required=True, help="Path to output image or video after detection")
     parser.add_argument('--use_tracker', action='store_true', help="Use if you want to use tracking")
+    parser.add_argument('--web_camera', action='store_true', help="Use if you want to use your camera")
     parser.add_argument('--visualize_matches', action='store_true', help="Use if you want to visualize matches with the reference image")
 
     args = parser.parse_args()
@@ -29,8 +30,13 @@ def parse_args_and_execute():
     camera_params_approximate = {}
     if args.camera_params is None:
         imgSize = (0, 0)
-        if args.video:
+        if args.video and not args.web_camera:
             cap = cv.VideoCapture(args.input)
+            ret, frame = cap.read()
+            imgSize = frame.shape
+            cap.release()
+        elif args.web_camera:
+            cap = cv.VideoCapture(0)
             ret, frame = cap.read()
             imgSize = frame.shape
             cap.release()
@@ -53,9 +59,15 @@ def parse_args_and_execute():
 
         if args.visualize_matches:
             print('visualizing matches with the reference image')
-            track_frame(detector, args.input, args.output, track_length=track_length, visualizing_matches=True)
+            if args.web_camera:
+                track_frame_cam(detector, args.output, track_length=track_length, visualizing_matches=True)
+            else:
+                track_frame(detector, args.input, args.output, track_length=track_length, visualizing_matches=True)
         else:
-            track_frame(detector, args.input, args.output, track_length=track_length)
+            if args.web_camera:
+                track_frame_cam(detector, args.output, track_length=track_length)
+            else:
+                track_frame(detector, args.input, args.output, track_length=track_length)
 
     else:
         print('detecting object on photo')

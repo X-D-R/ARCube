@@ -166,3 +166,122 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
                 break
 
     cv.destroyAllWindows()
+
+
+def track_frame_cam(detector: Detector, output_path: str = None, track_length: int = 50,
+                fps: int = 30, color: tuple = (255, 0, 0), visualizing_matches: bool = False) -> None:
+    '''
+    This func tracks object on video (with detection every track_length) and save video to output
+    :param detector: Detector, detector, that used to detect object
+    :param output_path: str, destination where video should be saved
+    :param track_length: int, length of frames that should be tracked until new detection
+    :param fps: int, frame per second (optional), 30 fps is usually used
+    :param color: tuple, color of frame in BGR color scheme (255, 0 , 0) - Blue
+    :param visualizing_matches: bool, whether to visualize matches with reference image
+    :return: None
+    '''
+    reference_image = detector.registration_params['img']
+    reference_kp = detector.registration_params["key_points_2d"]
+    cameraMatrix, distCoeffs = detector.camera_params['mtx'], detector.camera_params['dist']
+
+    cap = cv.VideoCapture(0)
+
+    tracker = FrameRegistration()
+
+    object_corners_3d = detector.registration_params['object_corners_3d']
+    object_corners_2d = detector.registration_params['object_corners_2d']
+
+    ret, previous_frame = cap.read()
+    if not ret:
+        print("Failed to read the first frame.")
+        exit()
+
+    img_pts, kpoints_3d, kpoints_2d, kp, matches, M, mask = detector.detect(previous_frame)
+    mask = np.zeros_like(previous_frame)
+    Images = []
+    Images_matching = []
+    count = 1
+    imgSize = None
+    while True:
+        ret, previous_frame = cap.read()
+        cv.imshow('camera', previous_frame)
+        if (cv.waitKey(25) & 0xFF) == ord('q'):
+            break
+        img_pts, kpoints_3d, kpoints_2d, kp, matches, M, mask = detector.detect(previous_frame)
+
+    while True:
+        ret, frame = cap.read()
+        if frame is None:
+            break
+
+        if count % track_length == 0:
+            img_pts_detected, kpoints_3d_detected, kpoints_2d_detected, kp_1, matches_1, M_1, mask_1 = detector.detect(previous_frame)
+
+            # handling case of bad detection
+            if img_pts_detected is None:
+                print("Bad detection of object, keeping old parameters")
+            else:
+                img_pts, kpoints_3d, kpoints_2d = img_pts_detected, kpoints_3d_detected, kpoints_2d_detected
+                kp, matches = kp_1, matches_1
+                mask = np.zeros_like(previous_frame)
+
+        if visualizing_matches:
+            Images_matching.append(visualize_matches(reference_image, reference_kp, frame, kp, matches))
+
+        # track new frame
+        good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d, kpoints_3d)
+        object_corners_2d = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs, object_corners_3d, detector)
+        if object_corners_2d is not None:
+            frame = cv.polylines(frame, [np.int32(object_corners_2d)], True, color, 3, cv.LINE_AA)
+            #print(mask)
+            #img = cv.add(frame, mask)
+            img = frame
+        else:
+            count = -1
+            img = frame
+        imgSize = img.shape
+        Images.append(img)
+        if len(frame) > 0:
+            previous_frame = frame.copy()
+
+        kpoints_2d = good_new.reshape(-1, 1, 2)
+
+        count += 1
+        cv.imshow('camera', img)
+        if cv.waitKey(25) & 0xFF == ord('q'):
+            break
+
+    cv.destroyAllWindows()
+    # saving video
+    height, width, channels = imgSize
+
+    fourcc = cv.VideoWriter_fourcc(*'mp4v')
+
+    video = cv.VideoWriter(output_path, fourcc, fps, (width, height))
+
+    for i in range(len(Images)):
+        video.write(Images[i])
+        if (cv.waitKey(1) & 0xFF) == ord('q'):
+            break
+    video.release()
+    print("Saved video")
+
+    max_height = 800
+    for i in range(len(Images)):
+        img = Images[i]
+        h, w, channels = img.shape
+        if h > max_height:
+            scale = max_height / h
+            img = cv.resize(img, (int(w * scale), int(h * scale)))
+        cv.imshow("Detected video. Press 'q' to close", img)
+        if cv.waitKey(25) & 0xFF == ord('q'):
+            break
+
+    if visualizing_matches:
+        for i in range(len(Images_matching)):
+            img = Images_matching[i]
+            cv.imshow("Visualizing of matches. Press 'q' to close", img)
+            if cv.waitKey(25) & 0xFF == ord('q'):
+                break
+
+    cv.destroyAllWindows()
