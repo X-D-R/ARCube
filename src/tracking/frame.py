@@ -37,7 +37,7 @@ class FrameRegistration:
 
     def find_new_corners(self, kpoints_3D: np.ndarray, kpoints_2D: np.ndarray,
                          cameraMatrix: np.ndarray, distCoeffs: np.ndarray,
-                         corners_3D: np.ndarray) -> np.ndarray:
+                         corners_3D: np.ndarray, detector: Detector = None) -> np.ndarray:
         '''
         Find pose of object and calculate coordinates of corners
         :param kpoints_3D: 3D coordinates of key points
@@ -48,7 +48,8 @@ class FrameRegistration:
         :return: 2D coordinates of corners
         '''
         if len(kpoints_2D) > 3 and len(kpoints_2D) == len(kpoints_3D):
-            valid, rvecs, tvec = detect_pose(kpoints_2D, kpoints_3D, cameraMatrix, distCoeffs)
+            rvec, tvec = detector.get_rvec_tvec() if detector is not None else None, None
+            valid, rvecs, tvec = detect_pose(kpoints_2D, kpoints_3D, cameraMatrix, distCoeffs, rvec, tvec)
             corners_3D = np.float32(corners_3D)  # 3D coordinates of corners of model
             corners_2D, _ = cv.projectPoints(corners_3D, rvecs, tvec, cameraMatrix,
                                              distCoeffs)  # transform to 2D coordinates using pose
@@ -105,30 +106,18 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
 
             # handling case of bad detection
             if img_pts_detected is None:
-                print("Bad detection of object, replaced by tracking")
-                good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d,
-                                                                             kpoints_3d)
-                object_corners_2d = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs,
-                                                             object_corners_3d)
-                frame = cv.polylines(frame, [object_corners_2d.astype('int32')], True, color, 3, cv.LINE_AA)
-                img = cv.add(frame, mask)
-                imgSize = img.shape
-                Images.append(img)
-                # let tracking work extra 5 frames
-                count = track_length - 5
-                if len(frame) > 0:
-                    previous_frame = frame.copy()
-                continue
-            img_pts, kpoints_3d, kpoints_2d = img_pts_detected, kpoints_3d_detected, kpoints_2d_detected
-            kp, matches = kp_1, matches_1
-            mask = np.zeros_like(previous_frame)
+                print("Bad detection of object, keeping old parameters")
+            else:
+                img_pts, kpoints_3d, kpoints_2d = img_pts_detected, kpoints_3d_detected, kpoints_2d_detected
+                kp, matches = kp_1, matches_1
+                mask = np.zeros_like(previous_frame)
 
         if visualizing_matches:
             Images_matching.append(visualize_matches(reference_image, reference_kp, frame, kp, matches))
 
         # track new frame
         good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d, kpoints_3d)
-        object_corners_2d = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs, object_corners_3d)
+        object_corners_2d = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs, object_corners_3d, detector)
         if object_corners_2d is not None:
             frame = cv.polylines(frame, [np.int32(object_corners_2d)], True, color, 3, cv.LINE_AA)
             img = cv.add(frame, mask)

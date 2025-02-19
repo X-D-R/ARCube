@@ -1,5 +1,7 @@
 import argparse
 import os.path
+import numpy as np
+import cv2 as cv
 from src.detection.detection import Detector
 from src.tracking.frame import track_frame
 from src.utils.draw_functions import draw_contours_of_rectangle, visualize_matches_on_photo
@@ -14,29 +16,46 @@ def parse_args_and_execute():
 
     parser.add_argument('--model', type=str, help="Path to the saved model file")
     parser.add_argument('--demo', action='store_true', help="Use the default object model from the repository")
-    parser.add_argument('--camera_params', type=str, required=True, help="Path to camera parameters file ")
+    parser.add_argument('--camera_params', type=str, required=False, help="Path to camera parameters file")
     parser.add_argument('--input', type=str, required=True, help="Path to input image or video for detection")
     parser.add_argument('--video', action='store_true', help="if you want to detect video,"
                                                                     "don't use if you want to detect photo")
     parser.add_argument('--output', type=str, required=True, help="Path to output image or video after detection")
+    parser.add_argument('--use_tracker', action='store_true', help="Use if you want to use tracking")
     parser.add_argument('--visualize_matches', action='store_true', help="Use if you want to visualize matches with the reference image")
 
     args = parser.parse_args()
 
+    camera_params_approximate = {}
+    if args.camera_params is None:
+        imgSize = (0, 0)
+        if args.video:
+            cap = cv.VideoCapture(args.input)
+            ret, frame = cap.read()
+            imgSize = frame.shape
+            cap.release()
+        else:
+            img = cv.imread(args.input)
+            imgSize = img.shape
+        w, h = imgSize[0], imgSize[1]
+        f = 0.9*max(w, h)
+        camera_params_approximate = {'mtx': np.array([[f, 0, w/2], [0, f, h/2], [0, 0, 1]], np.float32), 'dist': np.array([0, 0, 0, 0, 0], np.float32)}
+
     if args.demo:
         detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles", "ModelParams", "model_test.npz"),
-                                args.camera_params)
+                                args.camera_params, camera_params_approximate=camera_params_approximate)
     else:
-        detector = set_detector(args.model, args.camera_params)
+        detector = set_detector(args.model, args.camera_params, camera_params_approximate=camera_params_approximate)
 
     if args.video:
         print('detecting object on video')
+        track_length = 50 if args.use_tracker else 1
 
         if args.visualize_matches:
             print('visualizing matches with the reference image')
-            track_frame(detector, args.input, args.output, visualizing_matches=True)
+            track_frame(detector, args.input, args.output, track_length=track_length, visualizing_matches=True)
         else:
-            track_frame(detector, args.input, args.output)
+            track_frame(detector, args.input, args.output, track_length=track_length)
 
     else:
         print('detecting object on photo')
@@ -49,7 +68,7 @@ def parse_args_and_execute():
                               args.input, keypoints, matches)
 
 
-def set_detector(model_params_file: str, camera_params_file: str, use_flann: bool = True) -> Detector:
+def set_detector(model_params_file: str, camera_params_file: str, use_flann: bool = True, camera_params_approximate: dict = {}) -> Detector:
     '''
     This function set detector using model params
     :param model_params_file: str, path to where model should be saved
@@ -60,7 +79,7 @@ def set_detector(model_params_file: str, camera_params_file: str, use_flann: boo
 
     detector = Detector()
     # detector.set_detector_by_model("CameraParams/CameraParams.npz", model, True)
-    detector.set_detector(camera_params_file, model_params_file, use_flann)
+    detector.set_detector(camera_params_file, model_params_file, use_flann, camera_params_approximate)
 
     return detector
 
@@ -96,5 +115,5 @@ if __name__ == "__main__":
     '''
     python detect.py --model "ExampleFiles/ModelParams/model_test.npz" --camera_params "ExampleFiles/CameraParams/CameraParams.npz" --input "ExampleFiles/new_book_check/new_book_video_main.mp4" --video --output "ExampleFiles/OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
     
-    python detect.py --demo --camera_params "ExampleFiles/CameraParams/CameraParams.npz" --input "ExampleFiles/new_book_check/new_book_video_main.mp4" --video --output "ExampleFiles/OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4"
+    python detect.py --demo --camera_params "ExampleFiles/CameraParams/CameraParams.npz" --input "ExampleFiles/new_book_check/new_book_video_main.mp4" --video --output "ExampleFiles/OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4" --use_tracker
     '''
