@@ -42,8 +42,8 @@ class Detector:
         if self.registration_params['feature_method'] in ["SIFT", "KAZE"]:
             if use_flann:
                 FLANN_INDEX_KDTREE = 1
-                index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=2)
-                search_params = dict(checks=10)
+                index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=10)
+                search_params = dict(checks=5)
                 self.matcher = cv.FlannBasedMatcher(index_params, search_params)
             else:
                 self.matcher = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)

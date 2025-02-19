@@ -34,7 +34,12 @@ class RegistrationUI():
             image = cv.filter2D(image, -1, kernel)
             image = cv.medianBlur(image, 5)
             image = cv.equalizeHist(image)
-            _, image = cv.threshold(image, 127, 255, cv.THRESH_BINARY)'''
+            _, image = cv.threshold(image, 100, 255, cv.THRESH_BINARY)
+            kernel = np.ones((5, 5), np.uint8)
+            image = cv.erode(image, kernel, iterations=1)
+            image = cv.dilate(image, kernel, iterations=1)
+            adaptive_thresh = cv.adaptiveThreshold(image, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY,
+                                                    11, 2)'''
             self.img = image
         except Exception as e:
             raise ValueError(f"An error occurred while loading the image: {e}")
