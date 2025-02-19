@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 from src.registration.rectangle_model import RectangleModel
+import time
 
 
 class Detector:
@@ -14,6 +15,9 @@ class Detector:
         self.use_flann = False
         self.previous_rvec = None
         self.previous_tvec = None
+
+    def get_rvec_tvec(self) -> (np.ndarray, np.ndarray):
+        return self.previous_rvec, self.previous_tvec
 
     def instance_method(self, use_flann=True) -> None:
         '''
@@ -38,8 +42,8 @@ class Detector:
         if self.registration_params['feature_method'] in ["SIFT", "KAZE"]:
             if use_flann:
                 FLANN_INDEX_KDTREE = 1
-                index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=5)
-                search_params = dict(checks=50)
+                index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=10)
+                search_params = dict(checks=5)
                 self.matcher = cv.FlannBasedMatcher(index_params, search_params)
             else:
                 self.matcher = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)
@@ -104,8 +108,12 @@ class Detector:
             "feature_method": model.feature_method
         }
 
-    def set_detector(self, camera_path: str, model_path: str, use_flann: bool = True) -> None:
-        self.load_camera_params(camera_path)
+    def set_detector(self, camera_path: str, model_path: str, use_flann: bool = True,
+                     camera_params_approximate: dict = {}) -> None:
+        if camera_path is None:
+            self.camera_params = camera_params_approximate
+        else:
+            self.load_camera_params(camera_path)
         self.load_model_params(model_path)
         self.instance_method(use_flann)
 
@@ -150,7 +158,7 @@ class Detector:
 
         return img_points, inliers_original, inliers_frame, kp2, good
 
-    def detect(self, image: np.ndarray, coeff_lowes: int = 0.7) -> (np.ndarray, np.ndarray, np.ndarray):
+    def detect(self, image: np.ndarray, coeff_lowes: int = 0.5) -> (np.ndarray, np.ndarray, np.ndarray):
         '''
         This func to detect object on image
         :param image: np.ndarray, image, there we need to detect object
@@ -172,14 +180,18 @@ class Detector:
             src_pts = np.float32([[kp1[m.queryIdx][0], kp1[m.queryIdx][1], kp1[m.queryIdx][2]] for m in good]).reshape(
                 -1, 1, 3)
             dst_pts = np.float32([[kp2[m.trainIdx].pt[0], kp2[m.trainIdx].pt[1]] for m in good]).reshape(-1, 1, 2)
-            M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
+            #M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
             mtx, dist = self.camera_params["mtx"], self.camera_params["dist"]
             if self.previous_rvec is None or self.previous_tvec is None:
-                valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist)
+                valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist, iterationsCount=100,
+                                                            reprojectionError=8.0, confidence=0.99,
+                                                            flags=cv.SOLVEPNP_ITERATIVE)
                 self.previous_rvec, self.previous_tvec = rvec, tvec
             else:
                 valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist, self.previous_rvec,
-                                                            self.previous_tvec)
+                                                            self.previous_tvec, useExtrinsicGuess=True,
+                                                            iterationsCount=100, reprojectionError=8.0, confidence=0.99,
+                                                            flags=cv.SOLVEPNP_ITERATIVE)
                 self.previous_rvec, self.previous_tvec = rvec, tvec
             obj_points = self.registration_params["object_corners_3d"]
             if valid:
@@ -195,7 +207,7 @@ class Detector:
             print("Not enough matches are found - {}/{}".format(len(good), self.MIN_MATCH_COUNT))
             img_points, inliers_original, inliers_frame = None, None, None
 
-        return img_points, inliers_original, inliers_frame, kp2, good, M, mask
+        return img_points, inliers_original, inliers_frame, kp2, good, None, None
 
     def _lowes_ratio_test(self, matches, coefficient=0.7) -> list:
         '''
@@ -212,9 +224,19 @@ class Detector:
         return good
 
 
-def detect_pose(p_feat, sift_3d, cameraMatrix, distCoeffs):
+def detect_pose(p_feat, sift_3d, cameraMatrix, distCoeffs, rvec=None, tvec=None):
     if len(p_feat) > 3 and len(p_feat) == len(sift_3d):
-        valid, rvec, tvec, mask = cv.solvePnPRansac(sift_3d, p_feat, cameraMatrix, distCoeffs)
+        '''if rvec is not None and tvec is not None:
+            valid, rvec, tvec, mask = cv.solvePnPRansac(sift_3d, p_feat, cameraMatrix, distCoeffs, rvec, tvec, useExtrinsicGuess=True, iterationsCount=100, reprojectionError=8.0, confidence=0.99, flags=cv.SOLVEPNP_ITERATIVE)
+        else:
+            valid, rvec, tvec, mask = cv.solvePnPRansac(sift_3d, p_feat, cameraMatrix, distCoeffs, iterationsCount=100, reprojectionError=8.0, confidence=0.99, flags=cv.SOLVEPNP_ITERATIVE)'''
+        if rvec is not None and tvec is not None:
+            valid, rvec, tvec = cv.solvePnP(sift_3d, p_feat, cameraMatrix, distCoeffs, rvec, tvec,
+                                                  useExtrinsicGuess=True,
+                                                  flags=cv.SOLVEPNP_ITERATIVE)
+        else:
+            valid, rvec, tvec = cv.solvePnP(sift_3d, p_feat, cameraMatrix, distCoeffs,
+                                                  flags=cv.SOLVEPNP_ITERATIVE)
         rvecs = cv.Rodrigues(rvec)[0]
         return valid, rvecs, tvec
     return False
