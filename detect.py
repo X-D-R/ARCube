@@ -129,5 +129,5 @@ if __name__ == "__main__":
     
     python detect.py --demo --camera_params "ExampleFiles/CameraParams/CameraParams.npz" --input "ExampleFiles/new_book_check/new_book_video_main.mp4" --video --output "ExampleFiles/OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4" --use_tracker
     
-    python detect.py --model "ExampleFiles/ModelParams/model_varior_book.npz" --video --output "ExampleFiles/OutputFiles/OutputVideos/varior_book_result.mp4" --use_tracker --web_camera
+    python detect.py --model "ExampleFiles/ModelParams/model_varior_book.npz" --video --output "ExampleFiles/OutputFiles/OutputVideos/varior_book_result.mp4" --use_tracker --web_camera 
     '''
