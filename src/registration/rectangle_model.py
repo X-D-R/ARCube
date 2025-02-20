@@ -169,9 +169,41 @@ class RectangleModel():
         self.save_to_npz(model_output)
         print(f"rectangle model saved to {model_output}")
 
+def upload_image_by_webcam(output_image: str):
+    '''
+    Uploads image using your webcam
+    :param output_image: str, path to save the image
+    '''
+    cap = cv.VideoCapture(0)
+
+    if not cap.isOpened():
+        print('Error: the cam is not opened')
+        exit()
+
+    while True:
+
+        ret, frame = cap.read()
+
+        if not ret:
+            print('Error: can not get the frame')
+            continue
+
+        cv.imshow('Webcam, click "s" to save photo', frame)
+
+        key = cv.waitKey(1) & 0xFF
+        if key == ord('s'):
+            cv.imwrite(output_image, frame)
+            print(f'Photo saved as {output_image}')
+            break
+
+        if key == ord('q'):
+            break
+
+    cap.release()
+    cv.destroyAllWindows()
 
 def register(input_image: str, output_image: str, object_corners_3d: np.ndarray,
-              feature_method: str, model_output: str) -> None:
+              feature_method: str, model_output: str, webcam: bool = False) -> None:
     '''
     Main registration function to detect, register, and save a rectangular model.
 
@@ -181,8 +213,13 @@ def register(input_image: str, output_image: str, object_corners_3d: np.ndarray,
     :param crop_method: str, the method of cropping, 'corner' (don't crop) or 'manual' (place points directly on image)
     :param feature_method: str, feature detection method to use (e.g., "ORB", "SIFT")
     :param model_output: str, path to save the model as a .npz file
+    :param webcam: bool = False, flag if user want to register object by webcam
     :return: None
     '''
+    if webcam:
+        upload_image_by_webcam(output_image)
+        input_image = output_image
+
     corners_model = RegistrationUI()
     object_corners_2d, object_corners_3d = corners_model.register_object_corners(input_image, object_corners_3d)
 
