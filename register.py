@@ -81,6 +81,7 @@ def register_to_model(object_corners_3d: np.ndarray, input_image: str, output_im
 if __name__ == "__main__":
     parse_args_and_execute()
     '''
+    
     python register.py --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --w 0.14 --h 0.21 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
     python register.py --output_image "exampleFiles/OutputFiles/OutputImages/output_varior_book.png" --w 0.13 --h 0.205 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_varior_book.npz" --webcam
     '''
