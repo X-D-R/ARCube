@@ -204,8 +204,9 @@ def track_frame_cam(detector: Detector, output_path: str = None, track_length: i
     imgSize = None
     while True:
         ret, previous_frame = cap.read()
-        cv.imshow('camera', previous_frame)
+        cv.imshow('Press "q" when the object will be visible on the camera', previous_frame)
         if (cv.waitKey(25) & 0xFF) == ord('q'):
+            cv.destroyAllWindows()
             break
         img_pts, kpoints_3d, kpoints_2d, kp, matches, M, mask = detector.detect(previous_frame)
 
@@ -247,8 +248,9 @@ def track_frame_cam(detector: Detector, output_path: str = None, track_length: i
         kpoints_2d = good_new.reshape(-1, 1, 2)
 
         count += 1
-        cv.imshow('camera', img)
+        cv.imshow('Press "q" to close the programm', img)
         if cv.waitKey(25) & 0xFF == ord('q'):
+            cv.destroyAllWindows()
             break
 
     cv.destroyAllWindows()
@@ -275,6 +277,7 @@ def track_frame_cam(detector: Detector, output_path: str = None, track_length: i
             img = cv.resize(img, (int(w * scale), int(h * scale)))
         cv.imshow("Detected video. Press 'q' to close", img)
         if cv.waitKey(25) & 0xFF == ord('q'):
+            cv.destroyAllWindows()
             break
 
     if visualizing_matches:
@@ -282,6 +285,7 @@ def track_frame_cam(detector: Detector, output_path: str = None, track_length: i
             img = Images_matching[i]
             cv.imshow("Visualizing of matches. Press 'q' to close", img)
             if cv.waitKey(25) & 0xFF == ord('q'):
+                cv.destroyAllWindows()
                 break
 
     cv.destroyAllWindows()
