@@ -63,7 +63,7 @@ print('setting detector')
 
 cam_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\CameraParams\\CameraParams.npz'
 model_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\ModelParams\\model_script_test.npz'
-frame = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\new_book_check\\book_3.jpg')
+# frame = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\new_book_check\\book_3.jpg')
 frame = cv.imread('E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\new_book_check.png')
 obj_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\box.obj'
 
@@ -85,10 +85,16 @@ if img_points is not None:
     frame = cv.polylines(frame, [np.int32(img_points)], True, 255, 3, cv.LINE_AA)
 
     # valid = True
-    # rvecs = np.array([[ 0.99928102,  0.01074149,  0.03636013],
+    # rvecs_ref = np.array([[ 0.99928102,  0.01074149,  0.03636013],
     #                 [-0.00892128,  0.99871648, -0.0498579],
     #                 [-0.03684901,  0.04949768,  0.99809425]])
     # tvec = np.array([ -0.07684176,   -0.10242596,  0.176132])
+
+    # valid = True
+    # rvecs_ref = np.array([[ 0.99701514,  0.07669297, -0.00888824],
+    #                 [-0.07621702,  0.99606621,  0.04520042],
+    #                 [0.01231983, -0.04438806,  0.9989384]])
+    # tvec_ref = np.array([ -0.24818897,   -0.30331281,  0.58025545])
 
     if valid:
         print('rendering')
