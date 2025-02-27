@@ -1,0 +1,17 @@
+newmtl color1
+Kd 1 0 0
+
+newmtl color2
+Kd 0 1 0
+
+newmtl color3
+Kd 0 0 1
+
+newmtl color4
+Kd 1 1 0
+
+newmtl color5
+Kd 1 0 1
+
+newmtl color6
+Kd 0 1 1
