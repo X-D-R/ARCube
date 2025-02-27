@@ -30,9 +30,9 @@ class RenderPyrender:
         # cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
 
         pose_cam = np.eye(4)
-        pose_cam[:3, 3] = np.array([0, 0, 0.21])
-        # pose_cam[1, 1] = -1
-        # pose_cam[2, 2] = -1
+        pose_cam[:3, 3] = np.array([0, -0.14, 0])
+        pose_cam[1, 1] = -1
+        pose_cam[2, 2] = -1
         print(pose_cam)
         cam_node = pyrender.Node(camera=cam, matrix=pose_cam)
         self.scene.add_node(cam_node)
@@ -85,19 +85,19 @@ def rendering():
     rend.load_obj(obj_path)
 
     print('detecting pose')
-    # img_points = 1
-    img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
+    img_points = 1
+    # img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
 
     if img_points is not None:
 
-        valid, rvecs, tvec = detect_pose(inliers_frame, inliers_original, camera_matrix, dist_coeffs)
-        frame = cv.polylines(frame, [np.int32(img_points)], True, 255, 3, cv.LINE_AA)
+        # valid, rvecs, tvec = detect_pose(inliers_frame, inliers_original, camera_matrix, dist_coeffs)
+        # frame = cv.polylines(frame, [np.int32(img_points)], True, 255, 3, cv.LINE_AA)
 
-        # valid = True
-        # rvecs_ref = np.array([[ 0.99928102,  0.01074149,  0.03636013],
-        #                 [-0.00892128,  0.99871648, -0.0498579],
-        #                 [-0.03684901,  0.04949768,  0.99809425]])
-        # tvec = np.array([ -0.07684176,   -0.10242596,  0.176132])
+        valid = True
+        rvecs_ref = np.array([[ 0.99928102,  0.01074149,  0.03636013],
+                        [-0.00892128,  0.99871648, -0.0498579],
+                        [-0.03684901,  0.04949768,  0.99809425]])
+        tvec_ref = np.array([ -0.07684176,   -0.10242596,  0.176132])
 
         # valid = True
         # rvecs_ref = np.array([[ 0.99701514,  0.07669297, -0.00888824],
@@ -108,13 +108,8 @@ def rendering():
 
         if valid:
             print('rendering')
-            rendered = rend.render_with_pose(rvecs, tvec, camera_matrix)
+            rendered = rend.render_with_pose(rvecs_ref, tvec_ref, camera_matrix)
             rendered = cv.resize(rendered, (frame.shape[1], frame.shape[0]))
-
-            cv.imshow("Press enter to close", rendered)
-            cv.waitKey(0)
-            cv.destroyAllWindows()
-            cv.imwrite('object.jpg', rendered)
 
             alpha = 0.4
             frame = cv.addWeighted(frame, 1 - alpha, rendered, alpha, 0)
