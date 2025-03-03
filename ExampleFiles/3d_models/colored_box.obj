@@ -1,0 +1,36 @@
+# Вершины (x, z, y)
+v 0 0.03 0
+v 0.14 0.03 0
+v 0.14 0.03 0.21
+v 0 0.03 0.21
+v 0 0 0
+v 0.14 0 0
+v 0.14 0 0.21
+v 0 0 0.21
+
+# Вершины цвета (r, g, b)
+vn 1 0 0
+vn 0 1 0
+vn 0 0 1
+vn 1 1 0
+vn 1 0 1
+vn 0 1 1
+vn 0.5 0.5 0.5
+vn 1 1 1
+
+# Материал
+mtllib colored_vertices.mtl
+
+# Грани (индексы вершин начинаются с 1)
+usemtl color1
+f 1 2 3 4
+usemtl color2
+f 5 6 7 8
+usemtl color3
+f 1 2 6 5
+usemtl color4
+f 2 3 7 6
+usemtl color5
+f 3 4 8 7
+usemtl color6
+f 4 1 5 8
