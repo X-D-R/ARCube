@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import math
 import os.path
 from src.detection.detection import detect_pose, Detector
 from detect import set_detector
@@ -8,8 +7,12 @@ MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
 
 
 class OBJ:
-    def __init__(self, filename, swapyz=False):
-        """Loads a Wavefront OBJ file. """
+    def __init__(self, filename: str, swapyz=False):
+        '''
+        Load obj model
+        :param filename: path to obj file
+        :param swapyz:
+        '''
         self.vertices = []
         self.normals = []
         self.texcoords = []
@@ -31,10 +34,6 @@ class OBJ:
                 self.normals.append(v)
             elif values[0] == 'vt':
                 self.texcoords.append(map(float, values[1:3]))
-            #elif values[0] in ('usemtl', 'usemat'):
-                #material = values[1]
-            #elif values[0] == 'mtllib':
-                #self.mtl = MTL(values[1])
             elif values[0] == 'f':
                 face = []
                 texcoords = []
@@ -50,7 +49,6 @@ class OBJ:
                         norms.append(int(w[2]))
                     else:
                         norms.append(0)
-                #self.faces.append((face, norms, texcoords, material))
                 self.faces.append((face, norms, texcoords))
 
 class render_CV:
@@ -58,32 +56,37 @@ class render_CV:
         self.DEFAULT_COLOR = (0, 0, 0)
 
 
-    '''def hex_to_rgb(self, hex_color):
-        """
-        Helper function to convert hex strings to RGB
-        """
-        hex_color = hex_color.lstrip('#')
-        h_len = len(hex_color)
-        return tuple(int(hex_color[i:i + h_len // 3], 16) for i in range(0, h_len, h_len // 3))'''
 
-    def render(self, img, obj, projection, rvecs, tvec, mtx, dst, color=False):
-        """
+    def render(self, img, obj, rvecs, tvec, mtx, dst, texture):
+        '''
         Render a loaded obj model into the current video frame
-        """
-        DEFAULT_COLOR = (0, 0, 0)
+        :param img: current frame
+        :param obj: obj model of OBJ class
+        :param rvecs: matrix of rotation
+        :param tvec: vector of translation
+        :param mtx: camera matrix
+        :param dst: distortion coefficients of camera
+        :param texture:
+        return frame with superimposed texture
+        '''
         vertices = obj.vertices
-
-
+        h, w, _ = img.shape
+        texture_h, texture_w, _ = texture.shape
         for face in obj.faces:
             face_vertices = face[0]
             points = np.array([vertices[vertex - 1] for vertex in face_vertices])
-            #dst = cv2.perspectiveTransform(points.reshape(-1, 1, 3), projection)
             dst, _ = cv2.projectPoints(points.reshape(-1, 1, 3), rvecs, tvec, mtx, dst)
-            print(dst)
             imgpts = np.int32(dst)
-
-            if color is False:
-                img = cv2.fillConvexPoly(img, imgpts, self.DEFAULT_COLOR)
+            x_1 = imgpts[0][0][0]
+            y_1 = imgpts[0][0][1]
+            x_2 = imgpts[1][0][0]
+            y_2 = imgpts[1][0][1]
+            size_of_texture = int(np.sqrt((x_1-x_2)**2 + (y_1-y_2)**2) // 2)
+            texture = cv2.resize(texture, (size_of_texture, size_of_texture))
+            x_start = x_1 + abs(x_1 - imgpts[2][0][0]) // 2 - size_of_texture // 2
+            y_start = y_1 + abs(y_1 - imgpts[2][0][1]) // 2 - size_of_texture // 2
+            if texture.shape == img[y_start:y_start+size_of_texture, x_start:x_start+size_of_texture].shape:
+                img[y_start:y_start+size_of_texture, x_start:x_start+size_of_texture] = texture
 
 
         return img
@@ -92,7 +95,7 @@ def main():
     """
     This functions loads the target surface image,
     """
-    homography = None
+
     detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles", "ModelParams", "model_test.npz"),
                             "ExampleFiles/CameraParams/CameraParams.npz")
     rend = render_CV()
@@ -104,42 +107,39 @@ def main():
     Images = []
 
     obj = OBJ(os.path.join(MAIN_DIR, 'box_2.obj'), swapyz=True)
+    texture = cv2.imread('hse.jpg')
 
     while True:
-        # read the current frame
         ret, frame = cap.read()
         if not ret:
             print("Unable to capture video")
             return
         img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
 
-
-        #pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1, 2)
-
-        #dst = cv2.perspectiveTransform(pts, homography)
         if img_points is not None:
 
             frame = cv2.polylines(frame, [np.int32(img_points)], True, 255, 3, cv2.LINE_AA)
             valid, rvecs, tvec = detect_pose(inliers_frame, inliers_original, camera_matrix, dist_coeffs)
             if valid:
 
-                projection = camera_matrix @ np.hstack((rvecs, tvec))
-                frame = rend.render(frame, obj, projection, rvecs, tvec, camera_matrix, dist_coeffs, False)
-
-        cv2.imshow('frame', frame)
-        height, width, channels = frame.shape
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+                frame = rend.render(frame, obj, rvecs, tvec, camera_matrix, dist_coeffs, texture)
         Images.append(frame)
+        cv2.imshow('To stop running press "Escape"', frame)
+        height, width, channels = frame.shape
+        if cv2.waitKey(33) & 0xFF == 27:
+            break
+
 
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    video = cv2.VideoWriter('result.mp4', fourcc, 30, (width, height))
+    video = cv2.VideoWriter('result_2.mp4', fourcc, 30, (width, height))
 
     for i in range(len(Images)):
         video.write(Images[i])
-        if (cv2.waitKey(1) & 0xFF) == ord('q'):
-            break
+        #if cv2.waitKey(33) & 0xFF == 27:
+         #   break
+
+
     cap.release()
 
     cv2.destroyAllWindows()
