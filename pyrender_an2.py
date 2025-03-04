@@ -58,7 +58,7 @@ class RenderPyrender:
         pose_obj = np.eye(4)
         pose_obj[:3, :3] = rvecs @ transform
         pose_obj[:3, 3] = tvec.flatten()
-        pose_obj[:3, 3] += np.array([0.07, 0.21, 0.105])
+        pose_obj[:3, 3] += np.array([0.06, 0.21, 0.105]) # first param should be 0.07, but it may vary
 
         self.scene.set_pose(self.mesh_node, pose_obj)
 
@@ -115,8 +115,20 @@ def render_photo(cam_path, model_path, frame_path, obj_path, output_path=None):
 
     img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
     valid, rvecs, tvec = detect_pose(inliers_frame, inliers_original, camera_matrix, dist_coeffs)
-    print(rvecs)
-    print(tvec)
+
+    # valid = True
+    # rvecs_ref = np.array([[ 0.99928102,  0.01074149,  0.03636013],
+    #                 [-0.00892128,  0.99871648, -0.0498579],
+    #                 [-0.03684901,  0.04949768,  0.99809425]])
+    # tvec_ref = np.array([-0.07684176,   -0.10242596,  0.176132])
+    # rvecs, tvec = rvecs_ref, tvec_ref
+
+    # valid = True
+    # rvecs_second = np.array([[0.99701514,  0.07669297, -0.00888824],
+    #                         [-0.07621702,  0.99606621,  0.04520042],
+    #                         [0.01231983, -0.04438806,  0.9989384]])
+    # tvec_second = np.array([-0.24818897,   -0.30331281,  0.58025545])
+    # rvecs, tvec = rvecs_second, tvec_second
 
     result = []
     if valid:
@@ -193,4 +205,4 @@ def main(photo=True):
         render_video(cam_path, model_path, video_path, obj_path, output_path_video)
 
 
-main()
+main(photo=False)
