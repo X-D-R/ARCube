@@ -85,8 +85,21 @@ class render_CV:
             texture = cv2.resize(texture, (size_of_texture, size_of_texture))
             x_start = x_1 + abs(x_1 - imgpts[2][0][0]) // 2 - size_of_texture // 2
             y_start = y_1 + abs(y_1 - imgpts[2][0][1]) // 2 - size_of_texture // 2
-            if texture.shape == img[y_start:y_start+size_of_texture, x_start:x_start+size_of_texture].shape:
-                img[y_start:y_start+size_of_texture, x_start:x_start+size_of_texture] = texture
+
+            roi = img[y_start:y_start+size_of_texture, x_start:x_start+size_of_texture]
+
+            texture2gray = cv2.cvtColor(texture, cv2.COLOR_BGR2GRAY)
+            ret, mask = cv2.threshold(texture2gray, 220, 255, cv2.THRESH_BINARY)
+            mask_inv = cv2.bitwise_not(mask)
+
+            img1_bg = cv2.bitwise_and(roi, roi, mask=mask)
+
+            img2_fg = cv2.bitwise_and(texture, texture, mask=mask_inv)
+
+            dst = cv2.add(img1_bg, img2_fg)
+
+            if dst.shape == img[y_start:y_start + size_of_texture, x_start:x_start + size_of_texture].shape:
+                img[y_start:y_start + size_of_texture, x_start:x_start + size_of_texture] = dst
 
 
         return img
