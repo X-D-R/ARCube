@@ -3,7 +3,7 @@ import os.path
 import numpy as np
 import cv2 as cv
 from src.detection.detection import Detector
-from src.tracking.frame import track_frame, track_frame_cam
+from src.tracking.frame import track_frame
 from src.utils.draw_functions import draw_contours_of_rectangle, visualize_matches_on_photo
 
 MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
@@ -50,9 +50,9 @@ def parse_args_and_execute():
 
     if args.demo:
         detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles", "ModelParams", "model_test.npz"),
-                                args.camera_params, camera_params_approximate=camera_params_approximate)
+                                args.camera_params, camera_params_approximate=camera_params_approximate, use_flann = True)
     else:
-        detector = set_detector(args.model, args.camera_params, camera_params_approximate=camera_params_approximate)
+        detector = set_detector(args.model, args.camera_params, camera_params_approximate=camera_params_approximate, use_flann = True)
 
     if args.video:
         print('detecting object on video')
