@@ -84,5 +84,7 @@ if __name__ == "__main__":
     
     python register.py --input_image "ExampleFiles/new_book_check/book_3.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/output_script_test.jpg" --w 0.14 --h 0.21 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_test.npz"
     python register.py --output_image "exampleFiles/OutputFiles/OutputImages/output_varior_book.png" --w 0.13 --h 0.205 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_varior_book.npz" --webcam
+    
+    python register.py --input_image "ExampleFiles/examples/images/varior_book_iphone.jpg" --output_image "ExampleFiles/OutputFiles/OutputImages/varior_book_iphone.jpg" --w 0.135 --h 0.205 --feature_method "SIFT" --model_output "ExampleFiles/ModelParams/model_varior_book_iphone.npz"
     '''
 

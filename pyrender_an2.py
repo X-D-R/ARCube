@@ -107,9 +107,16 @@ def show_save_image(image, output_path=None, photo=True):
             return
 
 
-def render_photo(cam_path, model_path, frame_path, obj_path, x, y, z, output_path=None):
+def render_photo(model_path, frame_path, obj_path, x, y, z, cam_path=None, output_path=None):
     frame = cv.imread(frame_path)
-    detector = set_detector(model_path, cam_path)
+    camera_params_approximate = {}
+    if cam_path is None:
+        h, w, channels = frame.shape
+        f = 0.9 * max(w, h)
+        camera_params_approximate = {'mtx': np.array([[f, 0, w / 2], [0, f, h / 2], [0, 0, 1]], np.float32),
+                                     'dist': np.array([0, 0, 0, 0, 0], np.float32)}
+
+    detector = set_detector(model_path, cam_path, camera_params_approximate=camera_params_approximate)
     camera_matrix = detector.camera_params['mtx']
     dist_coeffs = detector.camera_params['dist']
 
@@ -144,15 +151,12 @@ def render_photo(cam_path, model_path, frame_path, obj_path, x, y, z, output_pat
     return result
 
 
-def render_video(cam_path, model_path, video_path, obj_path, x, y, z, output_path):
-    detector = set_detector(model_path, cam_path)
-    camera_matrix = detector.camera_params['mtx']
-    dist_coeffs = detector.camera_params['dist']
-
+def render_video(model_path, video_path, obj_path, x, y, z, cam_path=None, output_path='render_result.mp4'):
     cap = cv.VideoCapture(video_path)
     if not cap.isOpened():
         raise ValueError('error: video can not be opened')
 
+    detector, camera_matrix, dist_coeffs = None, None, None
     renderer = RenderPyrender
     video = None
     first_frame = True
@@ -166,6 +170,17 @@ def render_video(cam_path, model_path, video_path, obj_path, x, y, z, output_pat
             fourcc = cv.VideoWriter_fourcc(*'mp4v')
             fps = int(cap.get(cv.CAP_PROP_FPS))
             height, width, channels = frame.shape
+
+            camera_params_approximate = {}
+            if cam_path is None:
+                h, w, channels = frame.shape
+                f = 0.9 * max(w, h)
+                camera_params_approximate = {'mtx': np.array([[f, 0, w / 2], [0, f, h / 2], [0, 0, 1]], np.float32),
+                                             'dist': np.array([0, 0, 0, 0, 0], np.float32)}
+
+            detector = set_detector(model_path, cam_path, camera_params_approximate=camera_params_approximate)
+            camera_matrix = detector.camera_params['mtx']
+            dist_coeffs = detector.camera_params['dist']
 
             video = cv.VideoWriter(output_path, fourcc, fps, (width, height))
 
@@ -193,21 +208,41 @@ def render_video(cam_path, model_path, video_path, obj_path, x, y, z, output_pat
     cv.destroyAllWindows()
 
 
-def main(photo=True):
-    cam_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\CameraParams\\CameraParams.npz'
-    model_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\ModelParams\\model_script_test.npz'
-    # frame_path_ref = 'E:\\pycharm projects\\ARC\\ExampleFiles\\new_book_check\\book_3.jpg'
-    frame_path_second = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\new_book_check.png'
-    video_path = 'ExampleFiles\\new_book_check\\new_book_video_main.mp4'
-    obj_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\colored_box.obj'
-    output_path_img = 'pyrender_result.jpg'
-    output_path_video = 'pyrender_result.mp4'
-    x, y, z = 0.14, 0.03, 0.21
+def main(photo=True, sample=1):
+    if sample == 1:
+        cam_path1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\CameraParams\\CameraParams.npz'
+        model_path1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\ModelParams\\model_script_test.npz'
+        frame_path_ref1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\new_book_check\\book_3.jpg'
+        frame_path_second1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\new_book_check.png'
+        video_path1 = 'ExampleFiles\\new_book_check\\new_book_video_main.mp4'
+        obj_path1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\colored_box.obj'
+        output_path_img1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputImages\\pyrender_result.jpg'
+        output_path_video1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputVideos\\pyrender_result.mp4'
+        x1, y1, z1 = 0.14, 0.03, 0.21
 
-    if photo:
-        render_photo(cam_path, model_path, frame_path_second, obj_path, x, y, z, output_path_img)
-    else:
-        render_video(cam_path, model_path, video_path, obj_path, x, y, z, output_path_video)
+        if photo:
+            # render_photo(cam_path1, model_path1, frame_path_second1, obj_path, x1, y1, z1, output_path_img1)
+            render_photo(model_path1, frame_path_second1, obj_path1, x1, y1, z1, cam_path=cam_path1, output_path=output_path_img1)
+        else:
+            render_video(model_path1, video_path1, obj_path1, x1, y1, z1, cam_path=cam_path1, output_path=output_path_video1)
+
+    if sample == 2:
+        cam_path2 = None
+        model_path2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\ModelParams\\model_varior_book_iphone.npz'
+        frame_path_ref2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputImages\\varior_book_iphone.jpg'
+        frame_path_second2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\varior_book_iphone2.jpg'
+        frame_path_third2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\varior_book_iphone3.jpg'
+        frame_path_fourth2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\varior_book_iphone4.jpg'
+        video_path2 = 'ExampleFiles\\examples\\videos\\varior_book_iphone.MOV'
+        obj_path2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\colored_box_varior.obj'
+        output_path_img2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputImages\\pyrender_result_varior.jpg'
+        output_path_video2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputVideos\\pyrender_result_varior.mp4'
+        x2, y2, z2 = 0.135, 0.02, 0.205
+        if photo:
+            # render_photo(cam_path1, model_path1, frame_path_second1, obj_path, x1, y1, z1, output_path_img1)
+            render_photo(model_path2, frame_path_ref2, obj_path2, x2, y2, z2, cam_path=cam_path2, output_path=output_path_img2)
+        else:
+            render_video(model_path2, video_path2, obj_path2, x2, y2, z2, cam_path=cam_path2, output_path=output_path_video2)
 
 
-main()
+main(sample=2, photo=False)
