@@ -97,6 +97,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
     object_corners_2d = detector.registration_params['object_corners_2d']
 
     ret, previous_frame = cap.read()
+
     if not ret:
         print("Failed to read the first frame.")
         exit()

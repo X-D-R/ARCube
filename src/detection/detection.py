@@ -10,9 +10,12 @@ class Detector:
         self.images: list
         self.registration_params: dict = {}
         self.camera_params: dict = {}
-        self.descriptor = cv.ORB.create()  # base
-        self.matcher = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=True)  # base
-        self.use_flann = False
+        self.descriptor = cv.SIFT.create()  # base
+        FLANN_INDEX_KDTREE = 1
+        index_params = dict(algorithm=FLANN_INDEX_KDTREE, trees=10)
+        search_params = dict(checks=5)
+        self.matcher = cv.FlannBasedMatcher(index_params, search_params)
+        self.use_flann = True
         self.previous_rvec = None
         self.previous_tvec = None
 

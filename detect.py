@@ -51,9 +51,9 @@ def parse_args_and_execute():
 
     if args.demo:
         detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles", "ModelParams", "model_test.npz"),
-                                args.camera_params, camera_params_approximate=camera_params_approximate)
+                                args.camera_params, camera_params_approximate=camera_params_approximate, use_flann = True)
     else:
-        detector = set_detector(args.model, args.camera_params, camera_params_approximate=camera_params_approximate)
+        detector = set_detector(args.model, args.camera_params, camera_params_approximate=camera_params_approximate, use_flann = True)
 
     if args.video:
         print('detecting object on video')
