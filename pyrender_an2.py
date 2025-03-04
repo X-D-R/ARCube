@@ -10,14 +10,18 @@ class RenderPyrender:
     def __init__(self, w=640, h=480):
         self.scene = pyrender.Scene()
         self.renderer = pyrender.OffscreenRenderer(viewport_width=w, viewport_height=h)
+        self.x = 0
+        self.y = 0
+        self.z = 0
         self.mesh = None
         self.mesh_node = None
         self.cam_node = None
         self.light_node = None
 
-    def load_obj(self, obj_path):
+    def load_obj(self, obj_path, x, y, z):
         mesh = trimesh.load_mesh(obj_path)
         self.mesh = pyrender.Mesh.from_trimesh(mesh, smooth=False)
+        self.x, self.y, self.z = x, y, z
 
     def setup_scene(self, camera_matrix):
         if self.mesh is None:
@@ -31,7 +35,7 @@ class RenderPyrender:
         cam = pyrender.IntrinsicsCamera(fx, fy, cx, cy)
 
         pose_cam = np.eye(4)
-        pose_cam[:3, 3] = np.array([0.07, 0.015, 0.105])
+        pose_cam[:3, 3] = np.array([self.x/2, self.y/2, self.z/2])
         pose_cam[:3, :3] = np.array([
             [1,  0,  0],
             [0, -1,  0],
@@ -58,7 +62,7 @@ class RenderPyrender:
         pose_obj = np.eye(4)
         pose_obj[:3, :3] = rvecs @ transform
         pose_obj[:3, 3] = tvec.flatten()
-        pose_obj[:3, 3] += np.array([0.06, 0.21, 0.105]) # first param should be 0.07, but it may vary
+        pose_obj[:3, 3] += np.array([self.x/2, 0.21, self.z/2])
 
         self.scene.set_pose(self.mesh_node, pose_obj)
 
@@ -103,14 +107,14 @@ def show_save_image(image, output_path=None, photo=True):
             return
 
 
-def render_photo(cam_path, model_path, frame_path, obj_path, output_path=None):
+def render_photo(cam_path, model_path, frame_path, obj_path, x, y, z, output_path=None):
     frame = cv.imread(frame_path)
     detector = set_detector(model_path, cam_path)
     camera_matrix = detector.camera_params['mtx']
     dist_coeffs = detector.camera_params['dist']
 
     renderer = RenderPyrender(frame.shape[1], frame.shape[0])
-    renderer.load_obj(obj_path)
+    renderer.load_obj(obj_path, x, y, z)
     renderer.setup_scene(camera_matrix)
 
     img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
@@ -140,7 +144,7 @@ def render_photo(cam_path, model_path, frame_path, obj_path, output_path=None):
     return result
 
 
-def render_video(cam_path, model_path, video_path, obj_path, output_path):
+def render_video(cam_path, model_path, video_path, obj_path, x, y, z, output_path):
     detector = set_detector(model_path, cam_path)
     camera_matrix = detector.camera_params['mtx']
     dist_coeffs = detector.camera_params['dist']
@@ -166,7 +170,7 @@ def render_video(cam_path, model_path, video_path, obj_path, output_path):
             video = cv.VideoWriter(output_path, fourcc, fps, (width, height))
 
             renderer = RenderPyrender(width, height)
-            renderer.load_obj(obj_path)
+            renderer.load_obj(obj_path, x, y, z)
             renderer.setup_scene(camera_matrix)
 
             first_frame = False
@@ -198,11 +202,12 @@ def main(photo=True):
     obj_path = 'E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\colored_box.obj'
     output_path_img = 'pyrender_result.jpg'
     output_path_video = 'pyrender_result.mp4'
+    x, y, z = 0.14, 0.03, 0.21
 
     if photo:
-        render_photo(cam_path, model_path, frame_path_second, obj_path, output_path_img)
+        render_photo(cam_path, model_path, frame_path_second, obj_path, x, y, z, output_path_img)
     else:
-        render_video(cam_path, model_path, video_path, obj_path, output_path_video)
+        render_video(cam_path, model_path, video_path, obj_path, x, y, z, output_path_video)
 
 
-main(photo=False)
+main()
