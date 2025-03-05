@@ -233,7 +233,7 @@ def main(photo=True, sample=1):
         frame_path_second2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\varior_book_iphone2.jpg'
         frame_path_third2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\varior_book_iphone3.jpg'
         frame_path_fourth2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\varior_book_iphone4.jpg'
-        video_path2 = 'ExampleFiles\\examples\\videos\\varior_book_iphone.MOV'
+        video_path2 = 'ExampleFiles\\examples\\videos\\varior_book_iphone2.MOV'
         obj_path2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\colored_box_varior.obj'
         output_path_img2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputImages\\pyrender_result_varior.jpg'
         output_path_video2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputVideos\\pyrender_result_varior.mp4'
