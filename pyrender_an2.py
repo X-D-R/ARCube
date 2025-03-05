@@ -1,9 +1,12 @@
+import cv2 as cv
+import numpy as np
+import os
 import pyrender
 import trimesh
-import numpy as np
-import cv2 as cv
-from src.detection.detection import detect_pose
 from detect import set_detector
+from src.detection.detection import detect_pose
+
+MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
 
 
 class RenderPyrender:
@@ -27,10 +30,8 @@ class RenderPyrender:
         if self.mesh is None:
             raise ValueError('3D-model is not loaded!')
 
-        pose_obj = np.eye(4)
-        # pose_obj[:3, 3] = [self.x, self.y, self.z]  # Начальная позиция объекта
-
-        self.mesh_node = pyrender.Node(mesh=self.mesh, matrix=pose_obj)
+        # Подумать нужно ли что то делать с позой самого объекта!!!!!!!!!!
+        self.mesh_node = pyrender.Node(mesh=self.mesh)
         self.scene.add_node(self.mesh_node)
 
         fx, fy = camera_matrix[0, 0], camera_matrix[1, 1]
@@ -51,6 +52,7 @@ class RenderPyrender:
         transform = np.eye(4)
         transform[1, 1] = -1
         transform[2, 2] = -1
+        # подумать над трансформ!!!!!!!!!!!
 
         pose_cam = np.eye(4)
         pose_cam[:3, :3] = rvecs
@@ -157,7 +159,7 @@ def render_video(model_path, video_path, obj_path, x, y, z, cam_path=None, outpu
     while cap.isOpened():
         ret, frame = cap.read()
         if not ret:
-            print("Unable to capture video")
+            print('Unable to capture video')
             break
 
         if first_frame:
@@ -198,45 +200,53 @@ def render_video(model_path, video_path, obj_path, x, y, z, cam_path=None, outpu
     cap.release()
     if video is not None:
         video.release()
-        print("Saved video")
+        print('Saved video')
     cv.destroyAllWindows()
 
 
 def main(photo=True, sample=1):
     if sample == 1:
-        cam_path1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\CameraParams\\CameraParams.npz'
-        model_path1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\ModelParams\\model_script_test.npz'
-        frame_path_ref1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\new_book_check\\book_3.jpg'
-        frame_path_second1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\new_book_check.png'
-        video_path1 = 'ExampleFiles\\new_book_check\\new_book_video_main.mp4'
-        obj_path1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\colored_box.obj'
-        output_path_img1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputImages\\pyrender_result.jpg'
-        output_path_video1 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputVideos\\pyrender_result.mp4'
+        cam_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'CameraParams', 'CameraParams.npz')
+        model_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_script_test.npz')
+        frame_path_ref1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'new_book_check', 'book_3.jpg')
+        frame_path_second1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'new_book_check.png')
+        video_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'new_book_check', 'new_book_video_main.mp4')
+        obj_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', 'colored_box.obj')
+        output_path_img1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'OutputFiles', 'OutputImages', 'pyrender_result.jpg')
+        output_path_video1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'OutputFiles', 'OutputVideos',
+                                          'pyrender_result.mp4')
         x1, y1, z1 = 0.14, 0.03, 0.21
 
         if photo:
             # render_photo(cam_path1, model_path1, frame_path_second1, obj_path, x1, y1, z1, output_path_img1)
-            render_photo(model_path1, frame_path_ref1, obj_path1, x1, y1, z1, cam_path=cam_path1, output_path=output_path_img1)
+            render_photo(model_path1, frame_path_ref1, obj_path1, x1, y1, z1, cam_path=cam_path1,
+                         output_path=output_path_img1)
         else:
-            render_video(model_path1, video_path1, obj_path1, x1, y1, z1, cam_path=cam_path1, output_path=output_path_video1)
+            render_video(model_path1, video_path1, obj_path1, x1, y1, z1, cam_path=cam_path1,
+                         output_path=output_path_video1)
 
     if sample == 2:
         cam_path2 = None
-        model_path2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\ModelParams\\model_varior_book_iphone.npz'
-        frame_path_ref2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputImages\\varior_book_iphone.jpg'
-        frame_path_second2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\varior_book_iphone2.jpg'
-        frame_path_third2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\varior_book_iphone3.jpg'
-        frame_path_fourth2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\examples\\images\\varior_book_iphone4.jpg'
-        video_path2 = 'ExampleFiles\\examples\\videos\\varior_book_iphone2.MOV'
-        obj_path2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\3d_models\\colored_box_varior.obj'
-        output_path_img2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputImages\\pyrender_result_varior.jpg'
-        output_path_video2 = 'E:\\pycharm projects\\ARC\\ExampleFiles\\OutputFiles\\OutputVideos\\pyrender_result_varior.mp4'
+        model_path2 = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_varior_book_iphone.npz')
+        frame_path_ref2 = os.path.join(MAIN_DIR, 'ExampleFiles', 'OutputFiles', 'OutputImages',
+                                       'varior_book_iphone.jpg')
+        frame_path_second2 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'varior_book_iphone2.jpg')
+        frame_path_third2 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'varior_book_iphone3.jpg')
+        frame_path_fourth2 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'varior_book_iphone4.jpg')
+        video_path2 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'videos', 'varior_book_iphone2.MOV')
+        obj_path2 = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', 'colored_box_varior.obj')
+        output_path_img2 = os.path.join(MAIN_DIR, 'ExampleFiles', 'OutputFiles', 'OutputImages',
+                                        'pyrender_result_varior.jpg')
+        output_path_video2 = os.path.join(MAIN_DIR, 'ExampleFiles', 'OutputFiles', 'OutputVideos',
+                                          'pyrender_result_varior.mp4')
         x2, y2, z2 = 0.135, 0.02, 0.205
         if photo:
             # render_photo(cam_path1, model_path1, frame_path_second1, obj_path, x1, y1, z1, output_path_img1)
-            render_photo(model_path2, frame_path_ref2, obj_path2, x2, y2, z2, cam_path=cam_path2, output_path=output_path_img2)
+            render_photo(model_path2, frame_path_ref2, obj_path2, x2, y2, z2, cam_path=cam_path2,
+                         output_path=output_path_img2)
         else:
-            render_video(model_path2, video_path2, obj_path2, x2, y2, z2, cam_path=cam_path2, output_path=output_path_video2)
+            render_video(model_path2, video_path2, obj_path2, x2, y2, z2, cam_path=cam_path2,
+                         output_path=output_path_video2)
 
 
 main(sample=1)
