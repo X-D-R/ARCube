@@ -27,44 +27,38 @@ class RenderPyrender:
         if self.mesh is None:
             raise ValueError('3D-model is not loaded!')
 
-        self.mesh_node = pyrender.Node(mesh=self.mesh, matrix=np.eye(4))
+        pose_obj = np.eye(4)
+        # pose_obj[:3, 3] = [self.x, self.y, self.z]  # Начальная позиция объекта
+
+        self.mesh_node = pyrender.Node(mesh=self.mesh, matrix=pose_obj)
         self.scene.add_node(self.mesh_node)
 
         fx, fy = camera_matrix[0, 0], camera_matrix[1, 1]
         cx, cy = camera_matrix[0, 2], camera_matrix[1, 2]
         cam = pyrender.IntrinsicsCamera(fx, fy, cx, cy)
 
-        pose_cam = np.eye(4)
-        pose_cam[:3, 3] = np.array([self.x/2, self.y/2, self.z/2])
-        pose_cam[:3, :3] = np.array([
-            [1,  0,  0],
-            [0, -1,  0],
-            [0,  0, -1]
-        ])
-
-        self.cam_node = pyrender.Node(camera=cam, matrix=pose_cam)
+        self.cam_node = pyrender.Node(camera=cam)
         self.scene.add_node(self.cam_node)
 
         light = pyrender.DirectionalLight(color=np.ones(3), intensity=3.0)
-        self.light_node = pyrender.Node(light=light, matrix=pose_cam)
+        self.light_node = pyrender.Node(light=light)
         self.scene.add_node(self.light_node)
 
     def update_pose(self, rvecs, tvec):
         if self.mesh_node is None:
             raise ValueError('Launch setup_scene first')
 
-        transform = np.array([
-            [1, 0, 0],
-            [0, 0, -1],
-            [0, 1, 0]
-        ])
+        transform = np.eye(4)
+        transform[1, 1] = -1
+        transform[2, 2] = -1
 
-        pose_obj = np.eye(4)
-        pose_obj[:3, :3] = rvecs @ transform
-        pose_obj[:3, 3] = tvec.flatten()
-        pose_obj[:3, 3] += np.array([self.x/2, 0.21, self.z/2])
+        pose_cam = np.eye(4)
+        pose_cam[:3, :3] = rvecs
+        pose_cam[:3, 3] = tvec.flatten()
+        pose_cam = transform @ pose_cam
 
-        self.scene.set_pose(self.mesh_node, pose_obj)
+        self.scene.set_pose(self.cam_node, pose_cam)
+        self.scene.set_pose(self.light_node, pose_cam)
 
     def render(self):
         color, _ = self.renderer.render(self.scene, flags=pyrender.RenderFlags.RGBA)
@@ -222,7 +216,7 @@ def main(photo=True, sample=1):
 
         if photo:
             # render_photo(cam_path1, model_path1, frame_path_second1, obj_path, x1, y1, z1, output_path_img1)
-            render_photo(model_path1, frame_path_second1, obj_path1, x1, y1, z1, cam_path=cam_path1, output_path=output_path_img1)
+            render_photo(model_path1, frame_path_ref1, obj_path1, x1, y1, z1, cam_path=cam_path1, output_path=output_path_img1)
         else:
             render_video(model_path1, video_path1, obj_path1, x1, y1, z1, cam_path=cam_path1, output_path=output_path_video1)
 
@@ -245,4 +239,4 @@ def main(photo=True, sample=1):
             render_video(model_path2, video_path2, obj_path2, x2, y2, z2, cam_path=cam_path2, output_path=output_path_video2)
 
 
-main(sample=2, photo=False)
+main(sample=1)
