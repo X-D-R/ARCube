@@ -91,15 +91,16 @@ class render_CV:
             texture2gray = cv2.cvtColor(texture, cv2.COLOR_BGR2GRAY)
             ret, mask = cv2.threshold(texture2gray, 220, 255, cv2.THRESH_BINARY)
             mask_inv = cv2.bitwise_not(mask)
+            if mask.shape == roi.shape[:2] and mask.dtype == np.uint8:
 
-            img1_bg = cv2.bitwise_and(roi, roi, mask=mask)
+                img1_bg = cv2.bitwise_and(roi, roi, mask=mask)
 
-            img2_fg = cv2.bitwise_and(texture, texture, mask=mask_inv)
+                img2_fg = cv2.bitwise_and(texture, texture, mask=mask_inv)
 
-            dst = cv2.add(img1_bg, img2_fg)
+                dst = cv2.add(img1_bg, img2_fg)
 
-            if dst.shape == img[y_start:y_start + size_of_texture, x_start:x_start + size_of_texture].shape:
-                img[y_start:y_start + size_of_texture, x_start:x_start + size_of_texture] = dst
+                if dst.shape == img[y_start:y_start + size_of_texture, x_start:x_start + size_of_texture].shape:
+                    img[y_start:y_start + size_of_texture, x_start:x_start + size_of_texture] = dst
 
 
         return img
@@ -126,7 +127,7 @@ def main():
         ret, frame = cap.read()
         if not ret:
             print("Unable to capture video")
-            return
+            break
         img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
 
         if img_points is not None:
@@ -142,9 +143,22 @@ def main():
         if cv2.waitKey(33) & 0xFF == 27:
             break
 
-
-
+    #cv2.destroyAllWindows()
+    # saving video
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+
+    video = cv2.VideoWriter('result_2', fourcc, 30, (width, height))
+
+    for i in range(len(Images)):
+        video.write(Images[i])
+        if (cv2.waitKey(1) & 0xFF) == ord('q'):
+            break
+    video.release()
+    print("Saved video")
+    cv2.destroyAllWindows()
+
+
+    '''fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video = cv2.VideoWriter('result_2.mp4', fourcc, 30, (width, height))
 
     for i in range(len(Images)):
@@ -155,7 +169,7 @@ def main():
 
     cap.release()
 
-    cv2.destroyAllWindows()
+    cv2.destroyAllWindows()'''
 
 
 
