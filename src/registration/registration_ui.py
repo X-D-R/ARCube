@@ -39,7 +39,10 @@ class RegistrationUI():
             image = cv.erode(image, kernel, iterations=1)
             image = cv.dilate(image, kernel, iterations=1)
             adaptive_thresh = cv.adaptiveThreshold(image, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY,
-                                                    11, 2)'''
+                                                    11, 2)
+            image = cv.GaussianBlur(image, (11, 11), 2)
+            adaptive_thresh = cv.adaptiveThreshold(image, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY,
+                                                   11, 2)'''
             self.img = image
         except Exception as e:
             raise ValueError(f"An error occurred while loading the image: {e}")

@@ -3,7 +3,7 @@ import os.path
 import numpy as np
 import cv2 as cv
 from src.detection.detection import Detector
-from src.tracking.frame import track_frame, track_frame_cam
+from src.tracking.frame import track_frame
 from src.utils.draw_functions import draw_contours_of_rectangle, visualize_matches_on_photo
 
 MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
@@ -22,6 +22,7 @@ def parse_args_and_execute():
                                                                     "don't use if you want to detect photo")
     parser.add_argument('--output', type=str, required=True, help="Path to output image or video after detection")
     parser.add_argument('--use_tracker', action='store_true', help="Use if you want to use tracking")
+    parser.add_argument('--save_video', action='store_true', help="Use if you want to save video")
     parser.add_argument('--web_camera', action='store_true', help="Use if you want to use your camera")
     parser.add_argument('--visualize_matches', action='store_true', help="Use if you want to visualize matches with the reference image")
 
@@ -43,31 +44,23 @@ def parse_args_and_execute():
         else:
             img = cv.imread(args.input)
             imgSize = img.shape
-        w, h = imgSize[0], imgSize[1]
+        h, w = imgSize[0], imgSize[1]
         f = 0.9*max(w, h)
         camera_params_approximate = {'mtx': np.array([[f, 0, w/2], [0, f, h/2], [0, 0, 1]], np.float32), 'dist': np.array([0, 0, 0, 0, 0], np.float32)}
 
     if args.demo:
         detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles", "ModelParams", "model_test.npz"),
-                                args.camera_params, camera_params_approximate=camera_params_approximate)
+                                args.camera_params, camera_params_approximate=camera_params_approximate, use_flann = True)
     else:
-        detector = set_detector(args.model, args.camera_params, camera_params_approximate=camera_params_approximate)
+        detector = set_detector(args.model, args.camera_params, camera_params_approximate=camera_params_approximate, use_flann = True)
 
     if args.video:
         print('detecting object on video')
-        track_length = 50 if args.use_tracker else 1
-
         if args.visualize_matches:
             print('visualizing matches with the reference image')
-            if args.web_camera:
-                track_frame_cam(detector, args.output, track_length=track_length, visualizing_matches=True)
-            else:
-                track_frame(detector, args.input, args.output, track_length=track_length, visualizing_matches=True)
+            track_frame(detector, args.input, args.output, visualizing_matches=True, use_tracker=args.use_tracker, use_web_camera=args.web_camera, save_video=args.save_video)
         else:
-            if args.web_camera:
-                track_frame_cam(detector, args.output, track_length=track_length)
-            else:
-                track_frame(detector, args.input, args.output, track_length=track_length)
+            track_frame(detector, args.input, args.output, use_tracker=args.use_tracker, use_web_camera=args.web_camera, save_video=args.save_video)
 
     else:
         print('detecting object on photo')
