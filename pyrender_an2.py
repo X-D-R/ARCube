@@ -31,7 +31,15 @@ class RenderPyrender:
             raise ValueError('3D-model is not loaded!')
 
         # Подумать нужно ли что то делать с позой самого объекта!!!!!!!!!!
-        self.mesh_node = pyrender.Node(mesh=self.mesh)
+        # scale_factor = 100  #
+        # scale_matrix = np.eye(4)
+        # scale_matrix[:3, :3] *= scale_factor
+        pose_obj = np.eye(4)
+        # pose_obj[:3, :3] = np.array([[1, 0, 0],
+        #                              [0, 0, 1],
+        #                              [0, -1, 0]])
+        # pose_obj[:3, 3] = np.array([self.x/2, self.y/2, self.z/2])
+        self.mesh_node = pyrender.Node(mesh=self.mesh, matrix=pose_obj)
         self.scene.add_node(self.mesh_node)
 
         fx, fy = camera_matrix[0, 0], camera_matrix[1, 1]
@@ -62,11 +70,15 @@ class RenderPyrender:
         self.scene.set_pose(self.cam_node, pose_cam)
         self.scene.set_pose(self.light_node, pose_cam)
 
+
     def render(self):
+        # pyrender.Viewer(self.scene, use_raymond_lighting=True)
+
         color, _ = self.renderer.render(self.scene, flags=pyrender.RenderFlags.RGBA)
         if color.shape[-1] == 4:
             color = cv.cvtColor(color, cv.COLOR_RGBA2RGB)
         color = cv.cvtColor(color, cv.COLOR_RGB2BGR)
+
         return color
 
 
@@ -90,10 +102,10 @@ def show_save_image(image, output_path=None, photo=True):
         scale = max_height / h
         image = cv.resize(image, (int(w * scale), int(h * scale)))
 
-    if output_path is not None:
-        cv.imwrite(output_path, image)
-
     if photo:
+        if output_path is not None:
+            cv.imwrite(output_path, image)
+
         cv.imshow("Press enter to close", image)
         cv.waitKey(0)
         cv.destroyAllWindows()
@@ -249,4 +261,34 @@ def main(photo=True, sample=1):
                          output_path=output_path_video2)
 
 
-main(sample=1)
+def test():
+    cam_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'CameraParams', 'CameraParams.npz')
+    model_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_script_test.npz')
+    axes_path = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', 'axes.obj')
+    new_axes_path = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', "axes_boxes.obj")
+
+    mesh = trimesh.load_mesh(new_axes_path)
+
+    scene = pyrender.Scene()
+    scene.add(pyrender.Mesh.from_trimesh(mesh))
+
+    camera = pyrender.PerspectiveCamera(yfov=0.7)
+    scene.add(camera, pose=[[1, 0, 0, 0],
+                            [0, 1, 0, 0],
+                            [0, 0, 1, 0.3],
+                            [0, 0, 0, 1]])
+
+    light = pyrender.DirectionalLight(color=[1, 1, 1], intensity=2.0)
+    scene.add(light, pose=[[1, 0, 0, 0],
+                            [0, 1, 0, 0.0],
+                            [0, 0, 1, 0.3],
+                            [0, 0, 0, 1]])
+
+    viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
+
+# main(sample=1)
+
+
+test()
+
+
