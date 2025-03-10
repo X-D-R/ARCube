@@ -264,8 +264,30 @@ def main(photo=True, sample=1):
 def test():
     cam_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'CameraParams', 'CameraParams.npz')
     model_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_script_test.npz')
+    frame_path_ref1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'new_book_check', 'book_3.jpg')
+    frame_path_second1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'new_book_check.png')
     axes_path = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', 'axes.obj')
     new_axes_path = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', "axes_boxes.obj")
+
+    frame = cv.imread(frame_path_ref1)
+    detector = set_detector(model_path, cam_path)
+    camera_matrix = detector.camera_params['mtx']
+    dist_coeffs = detector.camera_params['dist']
+
+    img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
+    valid, rvecs, tvec = detect_pose(inliers_frame, inliers_original, camera_matrix, dist_coeffs)
+    if valid:
+        frame = cv.polylines(frame, [np.int32(img_points)], True, 255, 3, cv.LINE_AA)
+        transform = np.eye(4)
+        transform[1, 1] = -1
+        transform[2, 2] = -1
+        # подумать над трансформ!!!!!!!!!!!
+
+        pose_cam = np.eye(4)
+        pose_cam[:3, :3] = rvecs
+        pose_cam[:3, 3] = tvec.flatten()
+        pose_cam = transform @ pose_cam
+
 
     mesh = trimesh.load_mesh(new_axes_path)
 
@@ -273,16 +295,10 @@ def test():
     scene.add(pyrender.Mesh.from_trimesh(mesh))
 
     camera = pyrender.PerspectiveCamera(yfov=0.7)
-    scene.add(camera, pose=[[1, 0, 0, 0],
-                            [0, 1, 0, 0],
-                            [0, 0, 1, 0.3],
-                            [0, 0, 0, 1]])
+    scene.add(camera, pose=pose_cam)
 
     light = pyrender.DirectionalLight(color=[1, 1, 1], intensity=2.0)
-    scene.add(light, pose=[[1, 0, 0, 0],
-                            [0, 1, 0, 0.0],
-                            [0, 0, 1, 0.3],
-                            [0, 0, 0, 1]])
+    scene.add(light, pose=pose_cam)
 
     viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
 
