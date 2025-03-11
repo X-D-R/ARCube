@@ -3,6 +3,9 @@ import numpy as np
 from src.tracking.klt_tracker_class import KLT_Tracker
 from src.detection.detection import detect_pose, Detector
 from src.utils.draw_functions import visualize_matches
+from rendering_CV import OBJ, render_CV
+import os.path
+MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
 
 
 class FrameRegistration:
@@ -45,7 +48,7 @@ class FrameRegistration:
         :param cameraMatrix: camera matrix
         :param distCoeffs: distortion coefficient
         :param corners_3D: 3D coordinates of corners from model
-        :return: 2D coordinates of corners
+        :return: 2D coordinates of corners, rvec, rvec
         '''
         if len(kpoints_2D) > 3 and len(kpoints_2D) == len(kpoints_3D):
             rvec, tvec = detector.get_rvec_tvec() if detector is not None else None, None
@@ -56,13 +59,13 @@ class FrameRegistration:
             corners_2D = corners_2D.reshape(-1, 1, 2)
             # frame = cv.polylines(frame, [np.int32(t)], True, 255, 3, cv.LINE_AA)
 
-            return corners_2D
+            return corners_2D, valid, rvecs, tvec
         else:
             return None
 
 
 def track_frame(detector: Detector, video_path: str = None, output_path: str = None, track_length: int = 50,
-                fps: int = 30, color: tuple = (255, 0, 0), visualizing_matches: bool = False) -> None:
+                fps: int = 30, color: tuple = (255, 0, 0), visualizing_matches: bool = False, render: bool = False) -> None:
     '''
     This func tracks object on video (with detection every track_length) and save video to output
     :param detector: Detector, detector, that used to detect object
@@ -72,6 +75,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
     :param fps: int, frame per second (optional), 30 fps is usually used
     :param color: tuple, color of frame in BGR color scheme (255, 0 , 0) - Blue
     :param visualizing_matches: bool, whether to visualize matches with reference image
+    :param render: bool, whether to set rendering
     :return: None
     '''
     reference_image = detector.registration_params['img']
@@ -89,6 +93,10 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
     if not ret:
         print("Failed to read the first frame.")
         exit()
+    if render:
+        obj = OBJ(os.path.join(os.path.join(MAIN_DIR, "ExampleFiles", "3d_models", "box_CV.npz")), swapyz=True)
+        texture = cv.imread('hse.jpg')
+        rend = render_CV()
 
     img_pts, kpoints_3d, kpoints_2d, kp, matches, M, mask = detector.detect(previous_frame)
     mask = np.zeros_like(previous_frame)
@@ -112,15 +120,21 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
                 kp, matches = kp_1, matches_1
                 mask = np.zeros_like(previous_frame)
 
+
+
         if visualizing_matches:
             Images_matching.append(visualize_matches(reference_image, reference_kp, frame, kp, matches))
 
         # track new frame
         good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d, kpoints_3d)
-        object_corners_2d = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs, object_corners_3d, detector)
+        object_corners_2d, valid, rvec, tvec = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs, object_corners_3d, detector)
+
         if object_corners_2d is not None:
+
             frame = cv.polylines(frame, [np.int32(object_corners_2d)], True, color, 3, cv.LINE_AA)
             img = cv.add(frame, mask)
+            if render and valid:
+                img = rend.render(frame, obj, rvec, tvec, cameraMatrix, distCoeffs, texture)
         else:
             count = -1
             img = frame
@@ -231,7 +245,7 @@ def track_frame_cam(detector: Detector, output_path: str = None, track_length: i
 
         # track new frame
         good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d, kpoints_3d)
-        object_corners_2d = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs, object_corners_3d, detector)
+        object_corners_2d, valid, rvec, tvec = tracker.find_new_corners(kpoints_3d, good_new, cameraMatrix, distCoeffs, object_corners_3d, detector)
         if object_corners_2d is not None:
             frame = cv.polylines(frame, [np.int32(object_corners_2d)], True, color, 3, cv.LINE_AA)
             #print(mask)

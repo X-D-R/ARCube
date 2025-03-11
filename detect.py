@@ -5,7 +5,7 @@ import cv2 as cv
 from src.detection.detection import Detector
 from src.tracking.frame import track_frame, track_frame_cam
 from src.utils.draw_functions import draw_contours_of_rectangle, visualize_matches_on_photo
-
+from rendering_CV import rendering_video, generate_obj_file
 MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
 
 
@@ -24,6 +24,7 @@ def parse_args_and_execute():
     parser.add_argument('--use_tracker', action='store_true', help="Use if you want to use tracking")
     parser.add_argument('--web_camera', action='store_true', help="Use if you want to use your camera")
     parser.add_argument('--visualize_matches', action='store_true', help="Use if you want to visualize matches with the reference image")
+    parser.add_argument('--render', action='store_true', help="Use if you want to use rendering")
 
     args = parser.parse_args()
 
@@ -56,6 +57,12 @@ def parse_args_and_execute():
     if args.video:
         print('detecting object on video')
         track_length = 50 if args.use_tracker else 1
+        if args.render:
+            coord_3d = detector.registration_params['object_corners_3d']
+            w = coord_3d[2][0]
+            h = coord_3d[2][1]
+            generate_obj_file(os.path.join(MAIN_DIR, "ExampleFiles", "3d_models", "box_CV.npz"), w, h)
+            print("OBJ file is generated")
 
         if args.visualize_matches:
             print('visualizing matches with the reference image')
@@ -66,6 +73,8 @@ def parse_args_and_execute():
         else:
             if args.web_camera:
                 track_frame_cam(detector, args.output, track_length=track_length)
+            elif args.render:
+                track_frame(detector, args.input, args.output, track_length=track_length, render=True)
             else:
                 track_frame(detector, args.input, args.output, track_length=track_length)
 
