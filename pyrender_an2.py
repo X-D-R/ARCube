@@ -45,6 +45,11 @@ class RenderPyrender:
         cam = pyrender.IntrinsicsCamera(fx, fy, cx, cy)
         # cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
 
+        world_axes = trimesh.creation.axis(origin_size=0.05)
+        world_mesh = pyrender.Mesh.from_trimesh(world_axes, smooth=False)
+        world_axes_node = pyrender.Node(mesh=world_mesh, matrix=np.eye(4))
+        self.scene.add_node(world_axes_node)
+
         self.cam_node = pyrender.Node(camera=cam)
         self.scene.add_node(self.cam_node)
 
@@ -60,15 +65,20 @@ class RenderPyrender:
         pose_cam[:3, :3] = rvecs
         pose_cam[:3, 3] = tvec.flatten()
 
-        transform = np.eye(4)
-        transform[:3, :3] = np.array([
-            [-1, 0, 0],
-            [0, -1, 0],
-            [0, 0, 1]
-        ])
 
-        pose_cam = transform @ pose_cam
-        # pose_cam[:3, 3] = tvec.flatten() + np.array([0.468, 0.217, 0])
+        # transform = np.eye(4)
+        # transform[:3, :3] = np.array([
+        #     [-1, 0, 0],
+        #     [0, -1, 0],
+        #     [0, 0, 1]
+        # ])
+        #
+        # pose_cam = transform @ pose_cam
+
+        camera_axes = trimesh.creation.axis(origin_size=0.05)
+        camera_mesh = pyrender.Mesh.from_trimesh(camera_axes, smooth=False)
+        camera_axes_node = pyrender.Node(mesh=camera_mesh, matrix=pose_cam)
+        self.scene.add_node(camera_axes_node)
 
         self.scene.set_pose(self.cam_node, pose_cam)
         self.scene.set_pose(self.light_node, pose_cam)
@@ -222,7 +232,7 @@ def render_video(model_path, video_path, obj_path, x, y, z, cam_path=None, outpu
 def main(photo=True, sample=1):
     if sample == 1:
         cam_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'CameraParams', 'CameraParams.npz')
-        # cam_path1 = None
+        cam_path1 = None
         model_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_script_test.npz')
         frame_path_ref1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'new_book_check', 'book_3.jpg')
         frame_path_second1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'new_book_check.png')
@@ -309,13 +319,20 @@ def test():
 def test_axes():
 
     cam_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'CameraParams', 'CameraParams.npz')
+    cam_path = None
     model_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_script_test.npz')
     frame_path_ref1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'new_book_check', 'book_3.jpg')
     frame_path_second1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'new_book_check.png')
     obj_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', 'colored_box.obj')
 
     frame = cv.imread(frame_path_second1)
-    detector = set_detector(model_path, cam_path)
+
+    h, w, channels = frame.shape
+    f = 0.9 * max(w, h)
+    camera_params_approximate = {'mtx': np.array([[f, 0, w / 2], [0, f, h / 2], [0, 0, 1]], np.float32),
+                                 'dist': np.array([0, 0, 0, 0, 0], np.float32)}
+
+    detector = set_detector(model_path, cam_path, camera_params_approximate=camera_params_approximate)
     camera_matrix = detector.camera_params['mtx']
     dist_coeffs = detector.camera_params['dist']
 
@@ -333,14 +350,14 @@ def test_axes():
         pose_cam[:3, :3] = rvecs
         pose_cam[:3, 3] = tvec.flatten()
 
-        transform = np.eye(4)
-        transform[:3, :3] = np.array([
-            [-1, 0, 0],
-            [0, -1, 0],
-            [0, 0, 1]
-        ])
-
-        pose_cam = transform @ pose_cam
+        # transform = np.eye(4)
+        # transform[:3, :3] = np.array([
+        #     [-1, 0, 0],
+        #     [0, -1, 0],
+        #     [0, 0, 1]
+        # ])
+        #
+        # pose_cam = transform @ pose_cam
 
     world_axes = trimesh.creation.axis(origin_size=0.05)
     world_mesh = pyrender.Mesh.from_trimesh(world_axes, smooth=False)
@@ -363,7 +380,7 @@ def test_axes():
     light = pyrender.DirectionalLight(color=[1, 1, 1], intensity=2.0)
     scene.add(light, pose=pose_cam)
 
-    # pyrender.Viewer(scene, use_raymond_lighting=True)
+    pyrender.Viewer(scene, use_raymond_lighting=True)
 
     print("=== Поза камеры (pose_cam) ===")
     print(pose_cam)
@@ -389,6 +406,6 @@ def test_axes():
 
     print("2D координаты объекта на изображении:", u, v)
 
-# main(sample=1)
+main(sample=1)
 # test()
-test_axes()
+# test_axes()
