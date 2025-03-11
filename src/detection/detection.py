@@ -161,7 +161,7 @@ class Detector:
 
         return img_points, inliers_original, inliers_frame, kp2, good
 
-    def detect(self, image: np.ndarray, coeff_lowes: int = 0.5) -> (np.ndarray, np.ndarray, np.ndarray):
+    def detect(self, image: np.ndarray, coeff_lowes: int = 0.5, useExtrinsicGuess: bool = False) -> (np.ndarray, np.ndarray, np.ndarray):
         '''
         This func to detect object on image
         :param image: np.ndarray, image, there we need to detect object
@@ -185,16 +185,17 @@ class Detector:
             dst_pts = np.float32([[kp2[m.trainIdx].pt[0], kp2[m.trainIdx].pt[1]] for m in good]).reshape(-1, 1, 2)
             #M, mask = cv.findHomography(src_pts, dst_pts, cv.RANSAC, 5.0)
             mtx, dist = self.camera_params["mtx"], self.camera_params["dist"]
-            if self.previous_rvec is None or self.previous_tvec is None:
+            if (self.previous_rvec is None or self.previous_tvec is None) or not useExtrinsicGuess:
                 valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist, iterationsCount=100,
                                                             reprojectionError=8.0, confidence=0.99,
                                                             flags=cv.SOLVEPNP_ITERATIVE)
                 self.previous_rvec, self.previous_tvec = rvec, tvec
             else:
-                valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist, self.previous_rvec,
-                                                            self.previous_tvec, useExtrinsicGuess=True,
-                                                            iterationsCount=100, reprojectionError=8.0, confidence=0.99,
-                                                            flags=cv.SOLVEPNP_ITERATIVE)
+                if useExtrinsicGuess:
+                    valid, rvec, tvec, mask = cv.solvePnPRansac(src_pts, dst_pts, mtx, dist, self.previous_rvec,
+                                                                self.previous_tvec, useExtrinsicGuess=True,
+                                                                iterationsCount=100, reprojectionError=8.0, confidence=0.99,
+                                                                flags=cv.SOLVEPNP_ITERATIVE)
                 self.previous_rvec, self.previous_tvec = rvec, tvec
             obj_points = self.registration_params["object_corners_3d"]
             if valid:

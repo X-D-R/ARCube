@@ -48,7 +48,7 @@ class FrameRegistration:
         :param cameraMatrix: camera matrix
         :param distCoeffs: distortion coefficient
         :param corners_3D: 3D coordinates of corners from model
-        :return: 2D coordinates of corners, rvec, rvec
+        :return: 2D coordinates of corners
         '''
         if len(kpoints_2D) > 3 and len(kpoints_2D) == len(kpoints_3D):
             rvec, tvec = detector.get_rvec_tvec() if detector is not None else None, None
@@ -59,14 +59,14 @@ class FrameRegistration:
             corners_2D = corners_2D.reshape(-1, 1, 2)
             # frame = cv.polylines(frame, [np.int32(t)], True, 255, 3, cv.LINE_AA)
 
-            return corners_2D, valid, rvecs, tvec
+            return corners_2D
         else:
             return None
 
 
 def track_frame(detector: Detector, video_path: str = None, output_path: str = None,
                 fps: int = 30, color: tuple = (255, 0, 0), visualizing_matches: bool = False,
-                use_tracker: bool = False, use_web_camera: bool = False, save_video: bool = False, render: bool = False) -> None:
+                use_tracker: bool = False, use_web_camera: bool = False, save_video: bool = False) -> None:
     '''
     This func tracks object on video (with detection every track_length) and save video to output
     :param detector: Detector, detector, that used to detect object
@@ -79,7 +79,6 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
     :param use_tracker: bool, use tracker or not
     :param use_web_camera: bool, use web_camera or video
     :param save_video: bool, save video or not
-    :param render: bool, whether to set rendering
     :return: None
     '''
     reference_image = detector.registration_params['img']
@@ -131,7 +130,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
         else:
             img_pts_detected, kpoints_3d_detected, kpoints_2d_detected, kp_1, matches_1, M_1, mask_1 = detector.detect(
                 previous_frame)
-            if img_pts_detected is None or len(matches_1):
+            if img_pts_detected is None or kpoints_2d is not None:
                 print("Bad detection of object, tracking")
                 good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d,
                                                                              kpoints_3d)
