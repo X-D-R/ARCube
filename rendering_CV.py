@@ -84,15 +84,19 @@ class render_CV:
         for face in obj.faces:
             face_vertices = face[0]
             points = np.array([vertices[vertex - 1] for vertex in face_vertices])
-            print(rvecs)
             dst, _ = cv2.projectPoints(points.reshape(-1, 1, 3), rvecs, tvec, mtx, dst)
+            dst[np.isnan(dst)] = 0
             imgpts = np.int32(dst)
             #img = cv2.polylines(img, [np.int32(imgpts)], True, 255, 3, cv2.LINE_AA)
             x_1 = imgpts[0][0][0]
             y_1 = imgpts[0][0][1]
             x_2 = imgpts[1][0][0]
             y_2 = imgpts[1][0][1]
-            size_of_texture = int(np.sqrt((x_1-x_2)**2 + (y_1-y_2)**2) // 2)
+            distant = np.sqrt((x_1-x_2)**2 + (y_1-y_2)**2)
+            distant = 0 if np.isnan(distant) else distant
+            size_of_texture = int(distant // 2)
+            if size_of_texture == 0:
+                return None
             texture = cv2.resize(texture, (size_of_texture, size_of_texture))
             x_start = x_1 + abs(x_1 - imgpts[2][0][0]) // 2 - size_of_texture // 2
             y_start = y_1 + abs(y_1 - imgpts[2][0][1]) // 2 - size_of_texture // 2

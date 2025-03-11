@@ -66,7 +66,7 @@ class FrameRegistration:
 
 def track_frame(detector: Detector, video_path: str = None, output_path: str = None,
                 fps: int = 30, color: tuple = (255, 0, 0), visualizing_matches: bool = False,
-                use_tracker: bool = False, use_web_camera: bool = False, save_video: bool = False) -> None:
+                use_tracker: bool = False, use_web_camera: bool = False, save_video: bool = False, render: bool = False) -> None:
     '''
     This func tracks object on video (with detection every track_length) and save video to output
     :param detector: Detector, detector, that used to detect object
@@ -100,6 +100,8 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
     if not ret:
         print("Failed to read the first frame.")
         exit()
+
+    obj, texture = None, None
     if render:
         obj = OBJ(os.path.join(os.path.join(MAIN_DIR, "ExampleFiles", "3d_models", "box_CV.npz")), swapyz=True)
         texture = cv.imread('hse.jpg')
@@ -130,7 +132,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
         else:
             img_pts_detected, kpoints_3d_detected, kpoints_2d_detected, kp_1, matches_1, M_1, mask_1 = detector.detect(
                 previous_frame)
-            if img_pts_detected is None or kpoints_2d is not None:
+            if img_pts_detected is None or kpoints_2d is None:
                 print("Bad detection of object, tracking")
                 good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d,
                                                                              kpoints_3d)
@@ -147,9 +149,14 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
 
         if object_corners_2d is not None:
             frame = cv.polylines(frame, [np.int32(object_corners_2d)], True, color, 3, cv.LINE_AA)
-            img = cv.add(frame, mask)
-            if render and rvec is not None:
-                img = rend.render(frame, obj, rvec, tvec, cameraMatrix, distCoeffs, texture)
+            if render:
+                valid, rvec, tvec = detect_pose(kpoints_2d, kpoints_3d, cameraMatrix, distCoeffs)
+                if valid:
+                    img = rend.render(frame, obj, rvec, tvec, cameraMatrix, distCoeffs, texture)
+                if img is None:
+                    img = cv.add(frame, mask)
+            else:
+                img = cv.add(frame, mask)
         else:
             count = -1
             img = frame

@@ -67,9 +67,9 @@ def parse_args_and_execute():
 
         if args.visualize_matches:
             print('visualizing matches with the reference image')
-            track_frame(detector, args.input, args.output, visualizing_matches=True, use_tracker=args.use_tracker, use_web_camera=args.web_camera, save_video=args.save_video)
+            track_frame(detector, args.input, args.output, visualizing_matches=True, use_tracker=args.use_tracker, use_web_camera=args.web_camera, save_video=args.save_video, render=args.render)
         else:
-            track_frame(detector, args.input, args.output, use_tracker=args.use_tracker, use_web_camera=args.web_camera, save_video=args.save_video)
+            track_frame(detector, args.input, args.output, use_tracker=args.use_tracker, use_web_camera=args.web_camera, save_video=args.save_video, render=args.render)
 
     else:
         print('detecting object on photo')
