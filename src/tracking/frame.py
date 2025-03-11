@@ -123,7 +123,7 @@ def track_frame(detector: Detector, video_path: str = None, output_path: str = N
         else:
             img_pts_detected, kpoints_3d_detected, kpoints_2d_detected, kp_1, matches_1, M_1, mask_1 = detector.detect(
                 previous_frame)
-            if img_pts_detected is None or len(matches_1) < 0.1*main_good_len:
+            if img_pts_detected is None or kpoints_2d is not None:
                 print("Bad detection of object, tracking")
                 good_new, good_old, kpoints_3d = tracker.track_features_sift(previous_frame, frame, kpoints_2d,
                                                                              kpoints_3d)
