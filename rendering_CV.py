@@ -84,9 +84,10 @@ class render_CV:
         for face in obj.faces:
             face_vertices = face[0]
             points = np.array([vertices[vertex - 1] for vertex in face_vertices])
+            print(rvecs)
             dst, _ = cv2.projectPoints(points.reshape(-1, 1, 3), rvecs, tvec, mtx, dst)
             imgpts = np.int32(dst)
-            img = cv2.polylines(img, [np.int32(imgpts)], True, 255, 3, cv2.LINE_AA)
+            #img = cv2.polylines(img, [np.int32(imgpts)], True, 255, 3, cv2.LINE_AA)
             x_1 = imgpts[0][0][0]
             y_1 = imgpts[0][0][1]
             x_2 = imgpts[1][0][0]

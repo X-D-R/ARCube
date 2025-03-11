@@ -73,6 +73,8 @@ def parse_args_and_execute():
         else:
             if args.web_camera:
                 track_frame_cam(detector, args.output, track_length=track_length)
+            elif args.render:
+                track_frame(detector, args.input, args.output, track_length=track_length, render=True)
             else:
                 track_frame(detector, args.input, args.output, track_length=track_length)
 
