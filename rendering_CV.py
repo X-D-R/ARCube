@@ -2,8 +2,17 @@ import cv2
 import numpy as np
 import os.path
 from src.detection.detection import detect_pose, Detector
-from detect import set_detector
 MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
+
+
+def generate_obj_file(filename, width, height):
+    with open(filename, 'w') as file:
+        file.write("v 0 0 0\n")
+        file.write(f"v {width} 0 0\n")
+        file.write(f"v {width} 0 {height}\n")
+        file.write(f"v 0  0 {height}\n")
+        file.write("f 1 2 3 4\n")
+
 
 
 class OBJ:
@@ -77,6 +86,7 @@ class render_CV:
             points = np.array([vertices[vertex - 1] for vertex in face_vertices])
             dst, _ = cv2.projectPoints(points.reshape(-1, 1, 3), rvecs, tvec, mtx, dst)
             imgpts = np.int32(dst)
+            img = cv2.polylines(img, [np.int32(imgpts)], True, 255, 3, cv2.LINE_AA)
             x_1 = imgpts[0][0][0]
             y_1 = imgpts[0][0][1]
             x_2 = imgpts[1][0][0]
@@ -105,22 +115,23 @@ class render_CV:
 
         return img
 
-def main():
+def rendering_video(detector, cap, obj_path):
     """
     This functions loads the target surface image,
     """
 
-    detector = set_detector(os.path.join(MAIN_DIR, "ExampleFiles", "ModelParams", "model_test.npz"),
-                            "ExampleFiles/CameraParams/CameraParams.npz")
+
     rend = render_CV()
     camera_matrix = detector.camera_params['mtx']
     dist_coeffs = detector.camera_params['dist']
-    cap = cv2.VideoCapture("ExampleFiles/new_book_check/new_book_video_main.mp4")
+    #cap = cv2.VideoCapture("ExampleFiles/new_book_check/new_book_video_main.mp4")
     i = detector.registration_params['img']
     h,w, c = i.shape
     Images = []
 
-    obj = OBJ(os.path.join(MAIN_DIR, 'box_2.obj'), swapyz=True)
+    generate_obj_file("box.obj", width=0.14, height=0.21)
+
+    obj = OBJ(os.path.join(os.path.join(MAIN_DIR, "ExampleFiles", "3d_models", "box_CV.npz")), swapyz=True)
     texture = cv2.imread('hse.jpg')
 
     while True:
@@ -132,7 +143,7 @@ def main():
 
         if img_points is not None:
 
-            frame = cv2.polylines(frame, [np.int32(img_points)], True, 255, 3, cv2.LINE_AA)
+            #frame = cv2.polylines(frame, [np.int32(img_points)], True, 255, 3, cv2.LINE_AA)
             valid, rvecs, tvec = detect_pose(inliers_frame, inliers_original, camera_matrix, dist_coeffs)
             if valid:
 
@@ -147,7 +158,7 @@ def main():
     # saving video
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
-    video = cv2.VideoWriter('result_2', fourcc, 30, (width, height))
+    video = cv2.VideoWriter('result_2.mp4', fourcc, 30, (width, height))
 
     for i in range(len(Images)):
         video.write(Images[i])
@@ -172,5 +183,3 @@ def main():
     cv2.destroyAllWindows()'''
 
 
-
-main()
