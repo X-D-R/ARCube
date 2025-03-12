@@ -267,8 +267,7 @@ def main(photo=True, sample=1):
         x2, y2, z2 = 0.135, 0.02, 0.205
         if photo:
             # render_photo(cam_path1, model_path1, frame_path_second1, obj_path, x1, y1, z1, output_path_img1)
-            render_photo(model_path2, frame_path_ref2, obj_path2, x2, y2, z2, cam_path=cam_path2,
-                         output_path=output_path_img2)
+            render_photo(model_path2, frame_path_second2, obj_path2, x2, y2, z2, cam_path=cam_path2)
         else:
             render_video(model_path2, video_path2, obj_path2, x2, y2, z2, cam_path=cam_path2,
                          output_path=output_path_video2)
@@ -318,12 +317,19 @@ def test():
 
 def test_axes():
 
-    cam_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'CameraParams', 'CameraParams.npz')
+    # cam_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'CameraParams', 'CameraParams.npz')
+    # cam_path = None
+    # model_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_script_test.npz')
+    # frame_path_ref1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'new_book_check', 'book_3.jpg')
+    # frame_path_second1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'new_book_check.png')
+    # obj_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', 'colored_box.obj')
+
     cam_path = None
-    model_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_script_test.npz')
-    frame_path_ref1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'new_book_check', 'book_3.jpg')
-    frame_path_second1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'new_book_check.png')
-    obj_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', 'colored_box.obj')
+    model_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_varior_book_iphone.npz')
+    frame_path_ref1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'OutputFiles', 'OutputImages',
+                                   'varior_book_iphone.jpg')
+    frame_path_second1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'varior_book_iphone2.jpg')
+    obj_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', 'colored_box_varior.obj')
 
     frame = cv.imread(frame_path_second1)
 
@@ -374,7 +380,7 @@ def test_axes():
 
     cam = pyrender.IntrinsicsCamera(fx, fy, cx, cy)
 
-    cam_node = pyrender.Node(camera=cam)
+    cam_node = pyrender.Node(camera=cam, matrix=pose_cam)
     scene.add_node(cam_node)
 
     light = pyrender.DirectionalLight(color=[1, 1, 1], intensity=2.0)
@@ -382,30 +388,31 @@ def test_axes():
 
     pyrender.Viewer(scene, use_raymond_lighting=True)
 
-    print("=== Поза камеры (pose_cam) ===")
+    print('Поза камеры (pose_cam)')
     print(pose_cam)
 
-    print("=== Позиция объекта относительно камеры ===")
-    obj_position = np.linalg.inv(pose_cam) @ np.array([0, 0, 0, 1])
-    print("Объект в координатах камеры:", obj_position)
+    points = np.array([[0, 0, 0, 1],
+                        [0.135, 0, 0, 1],
+                        [0.135, 0.205, 0, 1],
+                        [0, 0.205, 0, 1]])
+    points_2d = []
 
-    cam_mtx = np.hstack((camera_matrix, np.zeros((3, 1))))  # Превращаем 3x3 в 3x4
+    cam_mtx = np.hstack((camera_matrix, np.zeros((3, 1))))
+    print('Матрица камеры:\n', cam_mtx)
+    for point in points:
 
-    print("Матрица камеры (K):\n", cam_mtx)
+        cam_point = pose_cam @ point
+        print('Объект в системе координат камеры:', cam_point)
 
-    # Проекция 3D-точки в систему координат камеры
-    cam_point = pose_cam @ np.array([0, 0, 0, 1])  # Мировая точка в координатах камеры
+        img_point = cam_mtx @ pose_cam @ point
 
-    print("Объект в системе координат камеры:", cam_point)
+        u, v = img_point[:2] / img_point[2]
+        points_2d.append([u, v])
+        print('2D координаты объекта на изображении:', u, v)
 
-    # Проецируем на 2D-изображение
-    img_point = cam_mtx @ cam_point[:4]
+    print(points)
+    print(points_2d)
 
-    # Нормализуем (делим на z)
-    u, v = img_point[:2] / img_point[2]
-
-    print("2D координаты объекта на изображении:", u, v)
-
-main(sample=1)
+main(sample=2)
 # test()
 # test_axes()
