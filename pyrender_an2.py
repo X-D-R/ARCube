@@ -45,10 +45,10 @@ class RenderPyrender:
         cam = pyrender.IntrinsicsCamera(fx, fy, cx, cy)
         # cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
 
-        world_axes = trimesh.creation.axis(origin_size=0.05)
-        world_mesh = pyrender.Mesh.from_trimesh(world_axes, smooth=False)
-        world_axes_node = pyrender.Node(mesh=world_mesh, matrix=np.eye(4))
-        self.scene.add_node(world_axes_node)
+        # world_axes = trimesh.creation.axis(origin_size=0.05)
+        # world_mesh = pyrender.Mesh.from_trimesh(world_axes, smooth=False)
+        # world_axes_node = pyrender.Node(mesh=world_mesh, matrix=np.eye(4))
+        # self.scene.add_node(world_axes_node)
 
         self.cam_node = pyrender.Node(camera=cam)
         self.scene.add_node(self.cam_node)
@@ -61,31 +61,33 @@ class RenderPyrender:
         if self.mesh_node is None:
             raise ValueError('Launch setup_scene first')
 
-        pose_cam = np.eye(4)
-        pose_cam[:3, :3] = rvecs
-        pose_cam[:3, 3] = tvec.flatten()
+        pose_obj = np.eye(4)
+        pose_obj[:3, :3] = rvecs
+        pose_obj[:3, 3] = tvec.flatten()
 
+        transform = np.eye(4)
+        transform[1, 1] = -1
+        transform[2, 2] = -1
+        pose_obj = transform @ pose_obj
+
+        self.scene.set_pose(self.mesh_node, pose_obj)
 
         # transform = np.eye(4)
-        # transform[:3, :3] = np.array([
-        #     [-1, 0, 0],
-        #     [0, -1, 0],
-        #     [0, 0, 1]
-        # ])
-        #
+        # transform[0, 0] = -1
+        # transform[1, 1] = -1
         # pose_cam = transform @ pose_cam
 
-        camera_axes = trimesh.creation.axis(origin_size=0.05)
-        camera_mesh = pyrender.Mesh.from_trimesh(camera_axes, smooth=False)
-        camera_axes_node = pyrender.Node(mesh=camera_mesh, matrix=pose_cam)
-        self.scene.add_node(camera_axes_node)
-
-        self.scene.set_pose(self.cam_node, pose_cam)
-        self.scene.set_pose(self.light_node, pose_cam)
+        # camera_axes = trimesh.creation.axis(origin_size=0.05)
+        # camera_mesh = pyrender.Mesh.from_trimesh(camera_axes, smooth=False)
+        # camera_axes_node = pyrender.Node(mesh=camera_mesh, matrix=pose_obj)
+        # self.scene.add_node(camera_axes_node)
+        #
+        # self.scene.set_pose(self.cam_node, pose_cam)
+        # self.scene.set_pose(self.light_node, pose_cam)
 
 
     def render(self):
-        pyrender.Viewer(self.scene, use_raymond_lighting=True)
+        # pyrender.Viewer(self.scene, use_ambient_lighting=True, viewer_flags={"show_world_axis": True, "cull_faces": False})
 
         color, _ = self.renderer.render(self.scene, flags=pyrender.RenderFlags.RGBA)
         if color.shape[-1] == 4:
@@ -267,7 +269,7 @@ def main(photo=True, sample=1):
         x2, y2, z2 = 0.135, 0.02, 0.205
         if photo:
             # render_photo(cam_path1, model_path1, frame_path_second1, obj_path, x1, y1, z1, output_path_img1)
-            render_photo(model_path2, frame_path_second2, obj_path2, x2, y2, z2, cam_path=cam_path2)
+            render_photo(model_path2, frame_path_second2, obj_path2, x2, y2, z2, cam_path=cam_path2, output_path=output_path_img2)
         else:
             render_video(model_path2, video_path2, obj_path2, x2, y2, z2, cam_path=cam_path2,
                          output_path=output_path_video2)
@@ -413,6 +415,7 @@ def test_axes():
     print(points)
     print(points_2d)
 
-main(sample=2)
+
+main(sample=2, photo=False)
 # test()
 # test_axes()
