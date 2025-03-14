@@ -14,14 +14,14 @@ This project provides tools for registrating objects (images), detecting in imag
 ## Description
 
 This project enables:
-- Loading camera calibration parameters.
-- Loading image, cropping it (through clicking on the object corners on the picture) and loading 3d parameters of the object .
+- Loading image, cropping it (through clicking on the object corners on the picture) and loading 3d parameters of the object.
 - Registrating object from image or webcamera for futher detection.
 - Loading camera calibration parameters.
 - Detecting an object in images and videos from prepared files or online using webcamera with algorithms: "ORB", "KAZE", "AKAZE", "BRISK", "SIFT".
+- Tracking object pose instead of detecting.
 - Saving detection results as image or video.
-- Running registration and detection scripts
-- Rendering modelss over detected objects
+- Running registration and detection scripts.
+- Rendering models over detected objects with CV or Pyrender.
 
 ## Requirements
 
