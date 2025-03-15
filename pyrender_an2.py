@@ -30,9 +30,7 @@ class RenderPyrender:
         if self.mesh is None:
             raise ValueError('3D-model is not loaded!')
 
-        # Подумать нужно ли что то делать с позой самого объекта!!!!!!!!!!
         pose_obj = np.eye(4)
-        # pose_obj[:3, 3] = -np.array([self.x, self.y, self.z])
 
         self.mesh_node = pyrender.Node(mesh=self.mesh, matrix=pose_obj)
         self.scene.add_node(self.mesh_node)
@@ -43,7 +41,6 @@ class RenderPyrender:
         print("cx, cy:", cx, cy)
 
         cam = pyrender.IntrinsicsCamera(fx, fy, cx, cy)
-        # cam = pyrender.PerspectiveCamera(yfov=np.pi / 3.0, aspectRatio=1.0)
 
         # world_axes = trimesh.creation.axis(origin_size=0.05)
         # world_mesh = pyrender.Mesh.from_trimesh(world_axes, smooth=False)
@@ -53,7 +50,7 @@ class RenderPyrender:
         self.cam_node = pyrender.Node(camera=cam)
         self.scene.add_node(self.cam_node)
 
-        light = pyrender.DirectionalLight(color=np.ones(3), intensity=3.0)
+        light = pyrender.PointLight(color=np.ones(3), intensity=5.0)
         self.light_node = pyrender.Node(light=light)
         self.scene.add_node(self.light_node)
 
@@ -64,6 +61,8 @@ class RenderPyrender:
         pose_obj = np.eye(4)
         pose_obj[:3, :3] = rvecs
         pose_obj[:3, 3] = tvec.flatten()
+
+        self.scene.set_pose(self.light_node, pose_obj)
 
         transform = np.eye(4)
         transform[1, 1] = -1
@@ -82,12 +81,11 @@ class RenderPyrender:
         # camera_axes_node = pyrender.Node(mesh=camera_mesh, matrix=pose_obj)
         # self.scene.add_node(camera_axes_node)
         #
-        # self.scene.set_pose(self.cam_node, pose_cam)
-        # self.scene.set_pose(self.light_node, pose_cam)
 
+        # self.scene.set_pose(self.light_node, pose_obj)
 
     def render(self):
-        # pyrender.Viewer(self.scene, use_ambient_lighting=True, viewer_flags={"show_world_axis": True, "cull_faces": False})
+        pyrender.Viewer(self.scene, use_ambient_lighting=True, viewer_flags={"show_world_axis": True, "cull_faces": False})
 
         color, _ = self.renderer.render(self.scene, flags=pyrender.RenderFlags.RGBA)
         if color.shape[-1] == 4:
@@ -416,6 +414,6 @@ def test_axes():
     print(points_2d)
 
 
-main(sample=2, photo=False)
+main(sample=2)
 # test()
 # test_axes()
