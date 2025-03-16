@@ -79,6 +79,7 @@ class Registration():
         self.des = np.array(filtered_des) if filtered_des else None
         self.method = feature
 
+
     def register_point(self, key_point_2d, key_point_3d: list) -> None:
         '''
         Registers a single 2D-3D point pair.
