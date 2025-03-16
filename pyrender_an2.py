@@ -13,18 +13,14 @@ class RenderPyrender:
     def __init__(self, w=640, h=480):
         self.scene = pyrender.Scene()
         self.renderer = pyrender.OffscreenRenderer(viewport_width=w, viewport_height=h)
-        self.x = 0
-        self.y = 0
-        self.z = 0
         self.mesh = None
         self.mesh_node = None
         self.cam_node = None
         self.light_node = None
 
-    def load_obj(self, obj_path, x, y, z):
+    def load_obj(self, obj_path):
         mesh = trimesh.load_mesh(obj_path)
         self.mesh = pyrender.Mesh.from_trimesh(mesh, smooth=False)
-        self.x, self.y, self.z = x, y, z
 
     def setup_scene(self, camera_matrix):
         if self.mesh is None:
@@ -37,15 +33,8 @@ class RenderPyrender:
 
         fx, fy = camera_matrix[0, 0], camera_matrix[1, 1]
         cx, cy = camera_matrix[0, 2], camera_matrix[1, 2]
-        print("fx, fy:", camera_matrix[0, 0], camera_matrix[1, 1])
-        print("cx, cy:", cx, cy)
 
         cam = pyrender.IntrinsicsCamera(fx, fy, cx, cy)
-
-        # world_axes = trimesh.creation.axis(origin_size=0.05)
-        # world_mesh = pyrender.Mesh.from_trimesh(world_axes, smooth=False)
-        # world_axes_node = pyrender.Node(mesh=world_mesh, matrix=np.eye(4))
-        # self.scene.add_node(world_axes_node)
 
         self.cam_node = pyrender.Node(camera=cam)
         self.scene.add_node(self.cam_node)
@@ -71,22 +60,8 @@ class RenderPyrender:
 
         self.scene.set_pose(self.mesh_node, pose_obj)
 
-        # transform = np.eye(4)
-        # transform[0, 0] = -1
-        # transform[1, 1] = -1
-        # pose_cam = transform @ pose_cam
-
-        # camera_axes = trimesh.creation.axis(origin_size=0.05)
-        # camera_mesh = pyrender.Mesh.from_trimesh(camera_axes, smooth=False)
-        # camera_axes_node = pyrender.Node(mesh=camera_mesh, matrix=pose_obj)
-        # self.scene.add_node(camera_axes_node)
-        #
-
-        # self.scene.set_pose(self.light_node, pose_obj)
-
     def render(self):
-        pyrender.Viewer(self.scene, use_ambient_lighting=True, viewer_flags={"show_world_axis": True, "cull_faces": False})
-
+        # pyrender.Viewer(self.scene, use_ambient_lighting=True, viewer_flags={"show_world_axis": True, "cull_faces": False})
         color, _ = self.renderer.render(self.scene, flags=pyrender.RenderFlags.RGBA)
         if color.shape[-1] == 4:
             color = cv.cvtColor(color, cv.COLOR_RGBA2RGB)
@@ -128,7 +103,7 @@ def show_save_image(image, output_path=None, photo=True):
             return
 
 
-def render_photo(model_path, frame_path, obj_path, x, y, z, cam_path=None, output_path=None):
+def render_photo(model_path, frame_path, obj_path, cam_path=None, output_path=None):
     frame = cv.imread(frame_path)
     camera_params_approximate = {}
     if cam_path is None:
@@ -142,25 +117,11 @@ def render_photo(model_path, frame_path, obj_path, x, y, z, cam_path=None, outpu
     dist_coeffs = detector.camera_params['dist']
 
     renderer = RenderPyrender(frame.shape[1], frame.shape[0])
-    renderer.load_obj(obj_path, x, y, z)
+    renderer.load_obj(obj_path)
     renderer.setup_scene(camera_matrix)
 
     img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
     valid, rvecs, tvec = detect_pose(inliers_frame, inliers_original, camera_matrix, dist_coeffs)
-
-    # valid = True
-    # rvecs_ref = np.array([[ 0.99928102,  0.01074149,  0.03636013],
-    #                 [-0.00892128,  0.99871648, -0.0498579],
-    #                 [-0.03684901,  0.04949768,  0.99809425]])
-    # tvec_ref = np.array([-0.07684176,   -0.10242596,  0.176132])
-    # rvecs, tvec = rvecs_ref, tvec_ref
-
-    # valid = True
-    # rvecs_second = np.array([[0.99701514,  0.07669297, -0.00888824],
-    #                         [-0.07621702,  0.99606621,  0.04520042],
-    #                         [0.01231983, -0.04438806,  0.9989384]])
-    # tvec_second = np.array([-0.24818897,   -0.30331281,  0.58025545])
-    # rvecs, tvec = rvecs_second, tvec_second
 
     result = []
     if valid:
@@ -172,7 +133,7 @@ def render_photo(model_path, frame_path, obj_path, x, y, z, cam_path=None, outpu
     return result
 
 
-def render_video(model_path, video_path, obj_path, x, y, z, cam_path=None, output_path='render_result.mp4'):
+def render_video(model_path, video_path, obj_path, cam_path=None, output_path='render_result.mp4'):
     cap = cv.VideoCapture(video_path)
     if not cap.isOpened():
         raise ValueError('error: video can not be opened')
@@ -206,7 +167,7 @@ def render_video(model_path, video_path, obj_path, x, y, z, cam_path=None, outpu
             video = cv.VideoWriter(output_path, fourcc, fps, (width, height))
 
             renderer = RenderPyrender(width, height)
-            renderer.load_obj(obj_path, x, y, z)
+            renderer.load_obj(obj_path)
             renderer.setup_scene(camera_matrix)
 
             first_frame = False
@@ -241,14 +202,11 @@ def main(photo=True, sample=1):
         output_path_img1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'OutputFiles', 'OutputImages', 'pyrender_result.jpg')
         output_path_video1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'OutputFiles', 'OutputVideos',
                                           'pyrender_result.mp4')
-        x1, y1, z1 = 0.14, 0.21, 0.03
 
         if photo:
-            # render_photo(cam_path1, model_path1, frame_path_second1, obj_path, x1, y1, z1, output_path_img1)
-            render_photo(model_path1, frame_path_second1, obj_path1, x1, y1, z1, cam_path=cam_path1)
+            render_photo(model_path1, frame_path_second1, obj_path1, cam_path=cam_path1, output_path=output_path_img1)
         else:
-            render_video(model_path1, video_path1, obj_path1, x1, y1, z1, cam_path=cam_path1,
-                         output_path=output_path_video1)
+            render_video(model_path1, video_path1, obj_path1, cam_path=cam_path1, output_path=output_path_video1)
 
     if sample == 2:
         cam_path2 = None
@@ -264,156 +222,12 @@ def main(photo=True, sample=1):
                                         'pyrender_result_varior.jpg')
         output_path_video2 = os.path.join(MAIN_DIR, 'ExampleFiles', 'OutputFiles', 'OutputVideos',
                                           'pyrender_result_varior.mp4')
-        x2, y2, z2 = 0.135, 0.02, 0.205
+
         if photo:
-            # render_photo(cam_path1, model_path1, frame_path_second1, obj_path, x1, y1, z1, output_path_img1)
-            render_photo(model_path2, frame_path_second2, obj_path2, x2, y2, z2, cam_path=cam_path2, output_path=output_path_img2)
+            render_photo(model_path2, frame_path_second2, obj_path2, cam_path=cam_path2, output_path=output_path_img2)
         else:
-            render_video(model_path2, video_path2, obj_path2, x2, y2, z2, cam_path=cam_path2,
+            render_video(model_path2, video_path2, obj_path2, cam_path=cam_path2,
                          output_path=output_path_video2)
 
 
-def test():
-    cam_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'CameraParams', 'CameraParams.npz')
-    model_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_script_test.npz')
-    frame_path_ref1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'new_book_check', 'book_3.jpg')
-    frame_path_second1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'new_book_check.png')
-    axes_path = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', 'axes.obj')
-    new_axes_path = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', "axes_boxes.obj")
-
-    frame = cv.imread(frame_path_second1)
-    detector = set_detector(model_path, cam_path)
-    camera_matrix = detector.camera_params['mtx']
-    dist_coeffs = detector.camera_params['dist']
-
-    img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
-    valid, rvecs, tvec = detect_pose(inliers_frame, inliers_original, camera_matrix, dist_coeffs)
-    if valid:
-        frame = cv.polylines(frame, [np.int32(img_points)], True, 255, 3, cv.LINE_AA)
-        transform = np.eye(4)
-        transform[1, 1] = -1
-        transform[2, 2] = -1
-        # подумать над трансформ!!!!!!!!!!!
-
-        pose_cam = np.eye(4)
-        pose_cam[:3, :3] = rvecs
-        pose_cam[:3, 3] = tvec.flatten()
-        # pose_cam = transform @ pose_cam
-
-
-    mesh = trimesh.load_mesh(new_axes_path)
-
-    scene = pyrender.Scene()
-    scene.add(pyrender.Mesh.from_trimesh(mesh))
-
-    camera = pyrender.PerspectiveCamera(yfov=0.7)
-    scene.add(camera, pose=pose_cam)
-
-    light = pyrender.DirectionalLight(color=[1, 1, 1], intensity=2.0)
-    scene.add(light, pose=pose_cam)
-
-    viewer = pyrender.Viewer(scene, use_raymond_lighting=True)
-
-
-def test_axes():
-
-    # cam_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'CameraParams', 'CameraParams.npz')
-    # cam_path = None
-    # model_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_script_test.npz')
-    # frame_path_ref1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'new_book_check', 'book_3.jpg')
-    # frame_path_second1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'new_book_check.png')
-    # obj_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', 'colored_box.obj')
-
-    cam_path = None
-    model_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_varior_book_iphone.npz')
-    frame_path_ref1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'OutputFiles', 'OutputImages',
-                                   'varior_book_iphone.jpg')
-    frame_path_second1 = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'varior_book_iphone2.jpg')
-    obj_path1 = os.path.join(MAIN_DIR, 'ExampleFiles', '3d_models', 'colored_box_varior.obj')
-
-    frame = cv.imread(frame_path_second1)
-
-    h, w, channels = frame.shape
-    f = 0.9 * max(w, h)
-    camera_params_approximate = {'mtx': np.array([[f, 0, w / 2], [0, f, h / 2], [0, 0, 1]], np.float32),
-                                 'dist': np.array([0, 0, 0, 0, 0], np.float32)}
-
-    detector = set_detector(model_path, cam_path, camera_params_approximate=camera_params_approximate)
-    camera_matrix = detector.camera_params['mtx']
-    dist_coeffs = detector.camera_params['dist']
-
-    mesh = trimesh.load_mesh(obj_path1)
-
-    scene = pyrender.Scene()
-
-    scene.add(pyrender.Mesh.from_trimesh(mesh))
-
-    img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
-    valid, rvecs, tvec = detect_pose(inliers_frame, inliers_original, camera_matrix, dist_coeffs)
-
-    pose_cam = np.eye(4)
-    if valid:
-        pose_cam[:3, :3] = rvecs
-        pose_cam[:3, 3] = tvec.flatten()
-
-        # transform = np.eye(4)
-        # transform[:3, :3] = np.array([
-        #     [-1, 0, 0],
-        #     [0, -1, 0],
-        #     [0, 0, 1]
-        # ])
-        #
-        # pose_cam = transform @ pose_cam
-
-    world_axes = trimesh.creation.axis(origin_size=0.05)
-    world_mesh = pyrender.Mesh.from_trimesh(world_axes, smooth=False)
-    world_axes_node = pyrender.Node(mesh=world_mesh, matrix=np.eye(4))
-    scene.add_node(world_axes_node)
-
-    camera_axes = trimesh.creation.axis(origin_size=0.05)
-    camera_mesh = pyrender.Mesh.from_trimesh(camera_axes, smooth=False)
-    camera_axes_node = pyrender.Node(mesh=camera_mesh, matrix=pose_cam)
-    scene.add_node(camera_axes_node)
-
-    fx, fy = camera_matrix[0, 0], camera_matrix[1, 1]
-    cx, cy = camera_matrix[0, 2], camera_matrix[1, 2]
-
-    cam = pyrender.IntrinsicsCamera(fx, fy, cx, cy)
-
-    cam_node = pyrender.Node(camera=cam, matrix=pose_cam)
-    scene.add_node(cam_node)
-
-    light = pyrender.DirectionalLight(color=[1, 1, 1], intensity=2.0)
-    scene.add(light, pose=pose_cam)
-
-    pyrender.Viewer(scene, use_raymond_lighting=True)
-
-    print('Поза камеры (pose_cam)')
-    print(pose_cam)
-
-    points = np.array([[0, 0, 0, 1],
-                        [0.135, 0, 0, 1],
-                        [0.135, 0.205, 0, 1],
-                        [0, 0.205, 0, 1]])
-    points_2d = []
-
-    cam_mtx = np.hstack((camera_matrix, np.zeros((3, 1))))
-    print('Матрица камеры:\n', cam_mtx)
-    for point in points:
-
-        cam_point = pose_cam @ point
-        print('Объект в системе координат камеры:', cam_point)
-
-        img_point = cam_mtx @ pose_cam @ point
-
-        u, v = img_point[:2] / img_point[2]
-        points_2d.append([u, v])
-        print('2D координаты объекта на изображении:', u, v)
-
-    print(points)
-    print(points_2d)
-
-
-main(sample=2)
-# test()
-# test_axes()
+main(sample=2, photo=False)
