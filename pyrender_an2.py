@@ -3,7 +3,6 @@ import numpy as np
 import os
 import pyrender
 import trimesh
-from detect import set_detector
 from src.detection.detection import detect_pose
 
 MAIN_DIR = os.path.dirname(os.path.abspath("detect.py"))
@@ -77,10 +76,34 @@ def render_frame(renderer: RenderPyrender, rvecs, tvec):
 
 
 def add_obj(frame, rendered):
+    # rendered = cv.resize(rendered, (frame.shape[1], frame.shape[0]))
+    # alpha = 0.4
+    # new_frame = cv.addWeighted(frame, 1 - alpha, rendered, alpha, 0)
+    # return new_frame
+    # Приводим изображение к нужному размеру
     rendered = cv.resize(rendered, (frame.shape[1], frame.shape[0]))
-    alpha = 0.4
-    new_frame = cv.addWeighted(frame, 1 - alpha, rendered, alpha, 0)
-    return new_frame
+
+    # Создаем маску: считаем белые пиксели как фон (если белый фон, он близок к 255,255,255)
+    lower_white = np.array([200, 200, 200], dtype=np.uint8)  # Нижний порог белого
+    upper_white = np.array([255, 255, 255], dtype=np.uint8)  # Верхний порог белого
+    mask = cv.inRange(rendered, lower_white, upper_white)  # Создаем бинарную маску (белое=255, остальное=0)
+
+    # Инвертируем маску (теперь объект = 1, фон = 0)
+    mask_inv = cv.bitwise_not(mask)
+
+    # Преобразуем в трехканальную маску
+    mask_inv_3ch = cv.merge([mask_inv, mask_inv, mask_inv])
+
+    # Оставляем только область объекта
+    rendered_fg = cv.bitwise_and(rendered, mask_inv_3ch)
+
+    # Оставляем фон без объекта
+    frame_bg = cv.bitwise_and(frame, cv.bitwise_not(mask_inv_3ch))
+
+    # Накладываем изображение без фона
+    final = cv.add(frame_bg, rendered_fg)
+
+    return final
 
 
 def show_save_image(image, output_path=None, photo=True):
@@ -224,10 +247,13 @@ def main(photo=True, sample=1):
                                           'pyrender_result_varior.mp4')
 
         if photo:
-            render_photo(model_path2, frame_path_second2, obj_path2, cam_path=cam_path2, output_path=output_path_img2)
+            render_photo(model_path2, frame_path_second2, obj_path2, cam_path=cam_path2)
         else:
             render_video(model_path2, video_path2, obj_path2, cam_path=cam_path2,
                          output_path=output_path_video2)
 
 
-main(sample=2, photo=False)
+if __name__ == "__main__":
+    from detect import set_detector
+
+    main(sample=2)
