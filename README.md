@@ -1,7 +1,13 @@
 # Аugmented Reality
 # Object registration and detection using OpenCV
 
-This project provides tools for registrating objects (images), detecting in images and videos and rendering modelss over detected objects. 
+This project provides tools for registrating objects (images), detecting in images and videos and rendering models over detected objects. 
+
+# Result examples
+
+[https://drive.google.com/file/d/1AtVbJkFRtglio9B-Qe82WQqoTj71yz1P/view?resourcekey](https://drive.google.com/file/d/18WlXenyAxPKE-2JMQRqVKq-5ENaBNRoI/view?resourcekey)
+
+[https://drive.google.com/file/d/1AtVbJkFRtglio9B-Qe82WQqoTj71yz1P/view?resourcekey](https://drive.google.com/file/d/18WlXenyAxPKE-2JMQRqVKq-5ENaBNRoI/view?resourcekey)
 
 ## Table of Contents
 
@@ -141,19 +147,25 @@ python detect.py --param_name1 param_value1 --param_name2 param_value2 --param_n
 
 - visualize_matches, action='store_true', "Use if you want to visualize matches with the reference image"
 
+- save_video, action='store_true', "Use if you want to save video"
+
+- render_cv, action='store_true', "Use if you want to use rendering by CV, only with video"
+
+- pyrender, type=str, "Path to the the obj file for rendering, use if you want to use rendering by pyrender, only with video"
+
 If you want to detect an object from your model, use 'model'. If you want to test detection with the model from repo use 'demo'.
 
 If you want to detect an object from the file, use 'input'. If you want to detect an object from your webcamera, use 'web_camera'.
 
 If you know your camera parametres, you can use 'camera_params'. Otherwise, the program will use default camera parametres.
 
-If you want to detect an object on video, use 'video', and all the input and output file should be 'mp4' format. So, you want ti detect an object on photo, all the input and output file should be photo format.
+If you want to detect an object on video, use 'video', and all the input and output file should be 'mp4' format. So, you want to detect an object on photo, all the input and output file should be photo format.
+
+If you want to add rendered 3D-effect on the object, use render_cv or pyrender
 
 **After running the script with your webcamera:**
 
-- first, place your object, so your object will be visible for the camera
-
-- second, press 'q' to start the detection of your object
+- first, place your object, so your object will be visible for the camera (You should run script and prepare your object to be visible for camera simultaneously). 
 
 - finally, press 'q' to end detection.
 
@@ -164,11 +176,15 @@ python detect.py --model "ExampleFiles/ModelParams/model_test.npz" --camera_para
 ```
 
 ```bash
-python detect.py --demo --camera_params "ExampleFiles/CameraParams/CameraParams.npz" --input "ExampleFiles/new_book_check/new_book_video_main.mp4" --video --output "ExampleFiles/OutputFiles/OutputVideos/new_book_video_main_result_new_color.mp4" --use_tracker
+python detect.py --model "ExampleFiles/ModelParams/model_varior_book_iphone.npz" --video --output "ExampleFiles/OutputFiles/OutputVideos/varior_book_result_iphone.mp4" --use_tracker --web_camera 
 ```
 
 ```bash
-python detect.py --model "ExampleFiles/ModelParams/model_varior_book_iphone.npz" --video --output "ExampleFiles/OutputFiles/OutputVideos/varior_book_result_iphone.mp4" --use_tracker --web_camera 
+python detect.py --model "ExampleFiles/ModelParams/model_varior_book_iphone.npz" --video --output "ExampleFiles/OutputFiles/OutputVideos/varior_book_result_with_render_cv_without_tracker.mp4" --web_camera --render_cv --save_video
+```
+
+```bash
+python detect.py --model "ExampleFiles/ModelParams/model_varior_book_iphone.npz" --video --output "ExampleFiles/OutputFiles/OutputVideos/varior_book_result_with_pyrender_without_tracker.mp4" --use_tracker --web_camera --pyrender "ExampleFiles/3d_models/colored_box_varior.obj" 
 ```
 
 ## License
