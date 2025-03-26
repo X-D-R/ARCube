@@ -188,3 +188,57 @@ def rendering_video(detector, cap, obj_path):
     cv2.destroyAllWindows()'''
 
 
+def rendering_photo(frame, model_path, cam_path=None, output_path=None):
+    """
+    This functions loads the target surface image,
+    """
+
+    from detect import set_detector
+
+    h, w, channels = frame.shape
+    f = 0.9 * max(w, h)
+    camera_params_approximate = {'mtx': np.array([[f, 0, w / 2], [0, f, h / 2], [0, 0, 1]], np.float32),
+                                 'dist': np.array([0, 0, 0, 0, 0], np.float32)}
+
+    detector = set_detector(model_path, cam_path, camera_params_approximate=camera_params_approximate)
+    camera_matrix = detector.camera_params['mtx']
+    dist_coeffs = detector.camera_params['dist']
+
+    rend = render_CV()
+    i = detector.registration_params['img']
+    h, w, c = i.shape
+
+    generate_obj_file("box.obj", width=0.135, height=0.205)
+
+    obj = OBJ(os.path.join(os.path.join(MAIN_DIR, "ExampleFiles", "3d_models", "box_CV.npz")), swapyz=True)
+    texture = cv2.imread('hse.jpg')
+
+    img_points, inliers_original, inliers_frame, kp, good, homography, mask = detector.detect(frame)
+
+    if img_points is not None:
+        frame = cv2.polylines(frame, [np.int32(img_points)], True, 255, 3, cv2.LINE_AA)
+        valid, rvecs, tvec = detect_pose(inliers_frame, inliers_original, camera_matrix, dist_coeffs)
+        if valid:
+            frame = rend.render(frame, obj, rvecs, tvec, camera_matrix, dist_coeffs, texture)
+
+    max_height = 800
+    if h > max_height:
+        scale = max_height / h
+        frame = cv2.resize(frame, (int(w * scale), int(h * scale)))
+
+    cv2.imshow("Press enter to close", frame)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    if output_path is not None:
+        cv2.imwrite(output_path, frame)
+
+
+if __name__ == "__main__":
+    model_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'ModelParams', 'model_varior_book_iphone.npz')
+    frame_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'examples', 'images', 'varior_book_iphone3.jpg')
+    frame = cv2.imread(frame_path)
+    output_path = os.path.join(MAIN_DIR, 'ExampleFiles', 'OutputFiles', 'OutputImages',
+                                    'cv_varior.jpg')
+
+    rendering_photo(frame, model_path, output_path=output_path)

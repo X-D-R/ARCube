@@ -152,5 +152,4 @@ if __name__ == "__main__":
     
     python detect.py --model "ExampleFiles/ModelParams/model_varior_book_iphone.npz" --video --output "ExampleFiles/OutputFiles/OutputVideos/varior_book_result_with_render_cv_without_tracker.mp4" --web_camera --render_cv --save_video
 
-    
     '''

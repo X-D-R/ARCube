@@ -247,7 +247,7 @@ def main(photo=True, sample=1):
                                           'pyrender_result_varior.mp4')
 
         if photo:
-            render_photo(model_path2, frame_path_second2, obj_path2, cam_path=cam_path2)
+            render_photo(model_path2, frame_path_third2, obj_path2, cam_path=cam_path2, output_path=output_path_img2)
         else:
             render_video(model_path2, video_path2, obj_path2, cam_path=cam_path2,
                          output_path=output_path_video2)
